@@ -1,0 +1,43 @@
+# Dependências - nunca precisam de contexto
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Build e cache
+dist/
+build/
+.next/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Arquivos sensíveis - NUNCA expor ao Claude
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+
+# Lock files - grande e irrelevante
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Dados e logs - podem ser muito grandes
+*.csv
+*.parquet
+*.h5
+*.pkl
+*.log
+logs/
+data/raw/
+
+# IDE e sistema
+.vscode/settings.json
+.DS_Store
+Thumbs.db

@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+
+# Variáveis de ambiente - NUNCA commitar
+.env
+.env.local
+.env.production
+*.key
+*.pem
+
+# Node / Frontend
+node_modules/
+dist/
+.next/
+
+# Dados de mercado (podem ser grandes)
+data/raw/
+*.parquet
+*.h5
+*.pkl
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
