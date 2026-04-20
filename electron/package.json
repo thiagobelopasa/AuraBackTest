@@ -1,0 +1,82 @@
+{
+  "name": "aurabacktest",
+  "productName": "AuraBackTest",
+  "version": "0.3.1",
+  "description": "Backtesting MQL5 com analytics estilo QuantAnalyzer",
+  "author": {
+    "name": "Thiago Belopasa",
+    "email": "thiago.belo.pasa@gmail.com"
+  },
+  "license": "UNLICENSED",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "release": "electron-builder --publish always"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "electron-log": "^5.2.0",
+    "electron-updater": "^6.3.9"
+  },
+  "build": {
+    "appId": "com.aurabacktest.app",
+    "productName": "AuraBackTest",
+    "copyright": "Copyright © 2026 Thiago Belopasa",
+    "asar": true,
+    "directories": {
+      "output": "../release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../frontend/dist",
+        "to": "frontend"
+      },
+      {
+        "from": "../backend-dist",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "AuraBackTest-Setup-${version}.${ext}",
+      "publisherName": "Thiago Belopasa"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "AuraBackTest",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "thiagobelopasa",
+      "repo": "AuraBackTest",
+      "releaseType": "release"
+    }
+  }
+}
