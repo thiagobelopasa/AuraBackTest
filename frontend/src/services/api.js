@@ -153,7 +153,7 @@ export const getMaeMfeTicks = (runId, parquetPath, bufferSeconds = 60) =>
   }).then(r => r.data)
 
 export const fetchRunTicks = (runId, terminalExe) =>
-  api.post(`/analysis/runs/${runId}/fetch-ticks`, { terminal_exe: terminalExe })
+  api.post(`/analysis/runs/${runId}/fetch-ticks`, terminalExe ? { terminal_exe: terminalExe } : {})
     .then(r => r.data)
 
 export const runTickMonteCarlo = (runId, payload) =>

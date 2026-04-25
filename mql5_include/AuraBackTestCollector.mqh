@@ -94,7 +94,9 @@ void AuraCollect(string parameters_json = "")
    FileWriteString(h, StringFormat("  \"sharpe_ratio\": %.4f,\n", TesterStatistics(STAT_SHARPE_RATIO)));
    FileWriteString(h, StringFormat("  \"trades_count\": %d,\n", (int)TesterStatistics(STAT_TRADES)));
 
-   // Lista de deals (entradas no histórico, filtrando só os de saída/fechamento)
+   // Lista de TODOS os deals (IN + OUT) com position_id e entry para parear no backend.
+   // entry: 0=IN (abertura), 1=OUT (fechamento), 2=INOUT (reversão), 3=OUT_BY (close-by)
+   // O Python usa position_id para parear IN↔OUT e reconstruir time_in/entry_price corretos.
    HistorySelect(0, TimeCurrent());
    int deals_total = HistoryDealsTotal();
    FileWriteString(h, "  \"deals\": [\n");
@@ -106,21 +108,27 @@ void AuraCollect(string parameters_json = "")
       if(ticket == 0) continue;
 
       long entry = HistoryDealGetInteger(ticket, DEAL_ENTRY);
-      // Só registramos deals de fechamento (DEAL_ENTRY_OUT) — são os que fecham posição e geram profit/loss
-      if(entry != DEAL_ENTRY_OUT && entry != DEAL_ENTRY_OUT_BY) continue;
+      // Ignora depósitos/retiradas (DEAL_ENTRY_IN com profit != 0 e sem posição) —
+      // apenas negociações reais (entry 0, 1, 2, 3)
+      if(entry < 0 || entry > 3) continue;
 
-      datetime time = (datetime)HistoryDealGetInteger(ticket, DEAL_TIME);
       long type = HistoryDealGetInteger(ticket, DEAL_TYPE);
-      double price = HistoryDealGetDouble(ticket, DEAL_PRICE);
-      double volume = HistoryDealGetDouble(ticket, DEAL_VOLUME);
-      double profit = HistoryDealGetDouble(ticket, DEAL_PROFIT);
-      double swap = HistoryDealGetDouble(ticket, DEAL_SWAP);
+      // Ignora deals de balance/crédito (tipos >= 2 são não-trade no MT5)
+      if(type >= 2) continue;
+
+      long position_id = HistoryDealGetInteger(ticket, DEAL_POSITION_ID);
+      datetime time    = (datetime)HistoryDealGetInteger(ticket, DEAL_TIME);
+      double price      = HistoryDealGetDouble(ticket, DEAL_PRICE);
+      double volume     = HistoryDealGetDouble(ticket, DEAL_VOLUME);
+      double profit     = HistoryDealGetDouble(ticket, DEAL_PROFIT);
+      double swap       = HistoryDealGetDouble(ticket, DEAL_SWAP);
       double commission = HistoryDealGetDouble(ticket, DEAL_COMMISSION);
 
       if(!first) FileWriteString(h, ",\n");
       FileWriteString(h, StringFormat(
-         "    {\"time\":\"%s\",\"type\":%d,\"price\":%.5f,\"volume\":%.2f,\"profit\":%.2f,\"swap\":%.2f,\"commission\":%.2f}",
-         TimeToString(time, TIME_DATE|TIME_SECONDS), (int)type, price, volume, profit, swap, commission
+         "    {\"position_id\":%I64d,\"entry\":%d,\"time\":\"%s\",\"type\":%d,\"price\":%.5f,\"volume\":%.2f,\"profit\":%.2f,\"swap\":%.2f,\"commission\":%.2f}",
+         position_id, (int)entry, TimeToString(time, TIME_DATE|TIME_SECONDS),
+         (int)type, price, volume, profit, swap, commission
       ));
       first = false;
    }

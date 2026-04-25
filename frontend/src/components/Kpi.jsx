@@ -5,7 +5,7 @@ export function Kpi({ label, value, colored, format = 'num', digits = 2, gradeKe
   let display = value
   if (!Number.isNaN(num) && Number.isFinite(num)) {
     if (format === 'pct') display = `${num.toFixed(digits)}%`
-    else if (format === 'money') display = num.toLocaleString('en-US', {
+    else if (format === 'money') display = num.toLocaleString('pt-BR', {
       minimumFractionDigits: digits, maximumFractionDigits: digits,
     })
     else display = num.toFixed(digits)

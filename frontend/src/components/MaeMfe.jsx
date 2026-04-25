@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis,
   CartesianGrid, Tooltip, ReferenceLine, BarChart, Bar, Cell,
 } from 'recharts'
-import { getMaeMfeTicks, fetchRunTicks, listRunningMT5, errorMessage } from '../services/api'
+import { getMaeMfeTicks, fetchRunTicks, errorMessage } from '../services/api'
 
 const axisProps = { stroke: '#8b98a5', tick: { fontSize: 11 } }
 const tooltipStyle = {
@@ -55,45 +55,31 @@ function buildRHist(data) {
 function TickLoader({ runId, ticksPath, onLoad }) {
   const [path, setPath] = useState(ticksPath || '')
   const [loading, setLoading] = useState(false)
-  const [fetching, setFetching] = useState(false)
-  const [mt5List, setMt5List] = useState(null)
-  const [selectedTerminal, setSelectedTerminal] = useState('')
   const [err, setErr] = useState('')
 
   useEffect(() => { if (ticksPath) setPath(ticksPath) }, [ticksPath])
 
-  const load = async (overridePath) => {
-    const p = overridePath || path
-    if (!p || !runId) return
+  const doFetch = async () => {
     setLoading(true); setErr('')
     try {
-      const r = await getMaeMfeTicks(runId, p || undefined)
-      onLoad(r)
+      const r = await fetchRunTicks(runId)
+      setPath(r.parquet_path)
+      const result = await getMaeMfeTicks(runId, r.parquet_path)
+      onLoad(result)
     } catch (e) {
       setErr(errorMessage(e))
     } finally { setLoading(false) }
   }
 
-  const detectMT5 = async () => {
+  const doCalc = async () => {
+    if (!path || !runId) return
+    setLoading(true); setErr('')
     try {
-      const list = await listRunningMT5()
-      setMt5List(list)
-      if (list.length === 1) setSelectedTerminal(list[0].terminal_exe)
-    } catch (e) { setErr(errorMessage(e)) }
-  }
-
-  const doAutoFetch = async () => {
-    const terminal = selectedTerminal || mt5List?.[0]?.terminal_exe
-    if (!terminal) return
-    setFetching(true); setErr('')
-    try {
-      const r = await fetchRunTicks(runId, terminal)
-      setPath(r.parquet_path)
-      setMt5List(null)
-      await load(r.parquet_path)
+      const result = await getMaeMfeTicks(runId, path)
+      onLoad(result)
     } catch (e) {
       setErr(errorMessage(e))
-    } finally { setFetching(false) }
+    } finally { setLoading(false) }
   }
 
   return (
@@ -101,7 +87,6 @@ function TickLoader({ runId, ticksPath, onLoad }) {
       <div className="muted small" style={{ marginBottom: 8 }}>
         Calcular MAE/MFE reais com dados de tick (mais preciso que proxy)
       </div>
-
       {path ? (
         <div className="row" style={{ gap: 8 }}>
           <div style={{ flex: 4, fontSize: 12, color: '#3fb950', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -110,43 +95,26 @@ function TickLoader({ runId, ticksPath, onLoad }) {
               onClick={() => setPath('')}>trocar</button>
           </div>
           <div className="fit">
-            <button disabled={loading} onClick={() => load()} style={{ fontSize: 12 }}>
-              {loading ? 'Processando...' : 'Calcular com ticks'}
+            <button disabled={loading} onClick={doCalc} style={{ fontSize: 12 }}>
+              {loading ? 'Calculando...' : 'Recalcular com ticks'}
             </button>
           </div>
         </div>
-      ) : !mt5List ? (
-        <div className="row" style={{ gap: 8 }}>
-          <div style={{ flex: 4 }}>
-            <input value={path} onChange={e => setPath(e.target.value)}
-              placeholder="Caminho do arquivo .parquet ou diretório particionado"
-              style={{ width: '100%', fontSize: 12 }} />
-          </div>
-          <button style={{ fontSize: 12 }} onClick={detectMT5}>Auto-buscar MT5</button>
-          <button disabled={!path || loading} onClick={() => load()} style={{ fontSize: 12 }}>
-            {loading ? 'Processando...' : 'Calcular'}
-          </button>
-        </div>
-      ) : mt5List.length === 0 ? (
-        <span className="muted small">Nenhum MT5 em execução.</span>
       ) : (
         <div className="row" style={{ gap: 8 }}>
-          {mt5List.length > 1 && (
-            <select value={selectedTerminal} onChange={e => setSelectedTerminal(e.target.value)} style={{ fontSize: 12 }}>
-              {mt5List.map(t => (
-                <option key={t.terminal_exe} value={t.terminal_exe}>
-                  {t.broker || t.terminal_exe}
-                </option>
-              ))}
-            </select>
-          )}
-          {mt5List.length === 1 && (
-            <span className="small muted">{mt5List[0].broker || mt5List[0].terminal_exe}</span>
-          )}
-          <button disabled={fetching} onClick={doAutoFetch} style={{ fontSize: 12 }}>
-            {fetching ? 'Baixando e calculando…' : 'Buscar ticks e calcular'}
+          <button disabled={loading || !runId} style={{ fontSize: 12 }} onClick={doFetch}>
+            {loading ? 'Baixando e calculando…' : 'Buscar ticks e calcular'}
           </button>
-          <button className="ghost" style={{ fontSize: 12 }} onClick={() => setMt5List(null)}>cancelar</button>
+          <div style={{ flex: 4 }}>
+            <input value={path} onChange={e => setPath(e.target.value)}
+              placeholder="ou informe caminho manual: C:/ticks/WIN/ticks.parquet"
+              style={{ width: '100%', fontSize: 12 }} />
+          </div>
+          {path && (
+            <button disabled={loading} onClick={doCalc} style={{ fontSize: 12 }}>
+              {loading ? 'Calculando...' : 'Calcular'}
+            </button>
+          )}
         </div>
       )}
       {err && <div className="errbox" style={{ marginTop: 6, fontSize: 12 }}>{err}</div>}

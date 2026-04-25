@@ -8,6 +8,7 @@ import { InstallationPicker } from '../components/InstallationPicker'
 import { useToast } from '../components/Toast'
 import { ContextualTooltip } from '../components/ContextualTooltip'
 
+
 // Aura Score = combinação ponderada dos principais critérios de risco ajustado.
 // Fórmula: 40% Sortino + 30% Calmar + 20% (PF-1) + 10% SQN
 // Favorece estratégias que pontuam bem em TODOS os eixos simultaneamente.
@@ -33,7 +34,7 @@ const SORT_OPTIONS = [
 
 const TIMEFRAMES = ['M1', 'M5', 'M15', 'M30', 'H1', 'H4', 'D1', 'W1', 'MN1']
 
-export function LiveOptPage({ onOpenRun }) {
+export function LiveOptPage({ onOpenRun, onNavigateToTriage }) {
   const { toast } = useToast()
   // Fluxo "Preparar robô"
   const [selection, setSelection] = useState(null)
@@ -76,7 +77,7 @@ export function LiveOptPage({ onOpenRun }) {
       if (cancelled) return
       setRunning(s.running); setWatchDir(s.watch_dir); setPasses(s.passes || [])
       if (s.session_id) setSessionId(s.session_id)
-    }).catch(() => {})
+    }).catch(e => console.error('[LiveOpt] snapshot falhou:', e))
 
     const ws = openLiveOptStream()
     wsRef.current = ws
@@ -180,10 +181,13 @@ export function LiveOptPage({ onOpenRun }) {
   }
 
   const exportCSV = () => {
-    const rows = passes.map(p => ({
+    if (!sorted.length) { toast.error('Sem passes pra exportar'); return }
+    const rows = sorted.map((p, i) => ({
+      rank: i + 1,
       pass_id: p.pass_id,
       num_trades: p.num_trades,
       ...(p.parameters || {}),
+      aura_score: p._aura_score,
       sortino: p.computed_metrics?.sortino_ratio,
       sharpe: p.computed_metrics?.sharpe_ratio,
       calmar: p.computed_metrics?.calmar_ratio,
@@ -192,11 +196,26 @@ export function LiveOptPage({ onOpenRun }) {
       max_dd_pct: p.computed_metrics?.max_drawdown_pct,
       sqn: p.computed_metrics?.sqn,
       win_rate: p.computed_metrics?.win_rate,
+      k_ratio: p.computed_metrics?.k_ratio,
+      expectancy: p.computed_metrics?.expectancy,
+      recovery_factor: p.computed_metrics?.recovery_factor,
+      mt5_criterion: p.native_metrics?.complex_criterion,
     }))
-    if (!rows.length) { toast.error('Sem passes pra exportar'); return }
-    const fname = `${robotName || 'aura'}_${timeframe}_${sessionId?.slice(0,8) || 'live'}.csv`
+    const sortLabel = SORT_OPTIONS.find(o => o.value === sortKey)?.label || sortKey
+    const fname = `${robotName || 'aura'}_${timeframe}_${sessionId?.slice(0,8) || 'live'}_by_${sortKey}.csv`
     downloadCSV(rows, fname)
-    toast.success('CSV exportado', `${rows.length} passes — ${fname}`)
+    toast.success('CSV exportado', `${rows.length} passes ordenados por ${sortLabel} — ${fname}`)
+  }
+
+  const openInAnalysis = async () => {
+    if (!sessionId) { toast.error('Sem session ativa', 'Inicie a coleta primeiro.'); return }
+    setLoading(true); setError('')
+    try {
+      const r = await sessionToTriage(sessionId, sortKey)
+      toast.success('Abrindo Análise de Otimização', `${r.num_passes} passes carregados`)
+      onNavigateToTriage && onNavigateToTriage(r)
+    } catch (e) { toast.error('Falha ao carregar análise', errorMessage(e)) }
+    finally { setLoading(false) }
   }
 
   const sorted = useMemo(() => {
@@ -353,6 +372,12 @@ export function LiveOptPage({ onOpenRun }) {
               <button className="ghost" disabled={loading} onClick={clearFiles} style={{ opacity: 0.7 }}>🗑️ Limpar arquivos</button>
             </ContextualTooltip>
             <button className="ghost" disabled={!passes.length} onClick={exportCSV}>Exportar CSV</button>
+            <ContextualTooltip text="Abre a aba Análise de Otimização com os passes já carregados e ordenados">
+              <button disabled={loading || !passes.length || !sessionId} onClick={openInAnalysis}
+                style={{ background: 'var(--accent)', color: '#fff', fontWeight: 600 }}>
+                Analisar Otimização →
+              </button>
+            </ContextualTooltip>
           </div>
         </div>
         <div className="small muted" style={{ marginTop: 10 }}>

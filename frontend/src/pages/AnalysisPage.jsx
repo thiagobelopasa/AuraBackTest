@@ -21,22 +21,22 @@ const axisProps = { stroke: '#8b98a5', tick: { fontSize: 11 } }
 const tooltipStyle = { contentStyle: { background: '#0b0f14', border: '1px solid #1f2a37', fontSize: 12 } }
 
 const METRICS_LAYOUT = [
-  { label: 'Net Profit', key: 'net_profit', format: 'money', colored: true },
-  { label: 'Net Profit %', key: 'net_profit_pct', format: 'pct', colored: true },
-  { label: 'Annual Return', key: 'annual_return_pct', format: 'pct', colored: true },
-  { label: 'Max Drawdown %', key: 'max_drawdown_pct', format: 'pct' },
-  { label: 'Profit Factor', key: 'profit_factor' },
-  { label: 'Expectancy', key: 'expectancy', format: 'money' },
+  { label: 'Lucro Líquido', key: 'net_profit', format: 'money', colored: true },
+  { label: 'Lucro Líquido %', key: 'net_profit_pct', format: 'pct', colored: true },
+  { label: 'Retorno Anual', key: 'annual_return_pct', format: 'pct', colored: true },
+  { label: 'Drawdown Máx %', key: 'max_drawdown_pct', format: 'pct' },
+  { label: 'Fator de Lucro', key: 'profit_factor' },
+  { label: 'Expectativa', key: 'expectancy', format: 'money' },
   { label: 'Payoff Ratio', key: 'payoff_ratio' },
-  { label: 'Win Rate', key: 'win_rate', format: 'pct', digits: 1 },
+  { label: 'Taxa de Acerto', key: 'win_rate', format: 'pct', digits: 1 },
   { label: 'Sharpe', key: 'sharpe_ratio', digits: 3 },
   { label: 'Sortino', key: 'sortino_ratio', digits: 3 },
   { label: 'SQN (Van Tharp)', key: 'sqn', digits: 3 },
   { label: 'K-Ratio', key: 'k_ratio', digits: 3 },
-  { label: 'Recovery Factor', key: 'recovery_factor', digits: 3 },
-  { label: 'Ulcer Index', key: 'ulcer_index', digits: 3 },
+  { label: 'Fator de Recuperação', key: 'recovery_factor', digits: 3 },
+  { label: 'Índice Ulcer', key: 'ulcer_index', digits: 3 },
   { label: 'Calmar', key: 'calmar_ratio', digits: 3 },
-  { label: 'Total Trades', key: 'total', format: 'num', digits: 0 },
+  { label: 'Total de Trades', key: 'total', format: 'num', digits: 0 },
 ]
 
 // ─── What-If helpers ────────────────────────────────────────────────────────
@@ -46,12 +46,12 @@ const WEEKDAYS = [
   { num: 3, label: 'Qui' }, { num: 4, label: 'Sex' }, { num: 5, label: 'Sáb' }, { num: 6, label: 'Dom' },
 ]
 const WI_KEYS = [
-  { label: 'Net Profit', key: 'net_profit', format: 'money', colored: true },
-  { label: 'Net Profit %', key: 'net_profit_pct', format: 'pct', colored: true },
+  { label: 'Lucro Líquido', key: 'net_profit', format: 'money', colored: true },
+  { label: 'Lucro Líquido %', key: 'net_profit_pct', format: 'pct', colored: true },
   { label: 'Sharpe', key: 'sharpe_ratio', digits: 3 },
-  { label: 'Max DD %', key: 'max_drawdown_pct', format: 'pct' },
-  { label: 'Win Rate', key: 'win_rate', format: 'pct', mult: 100, digits: 1 },
-  { label: 'Total Trades', key: 'total', format: 'num', digits: 0 },
+  { label: 'DD Máx %', key: 'max_drawdown_pct', format: 'pct' },
+  { label: 'Taxa de Acerto', key: 'win_rate', format: 'pct', mult: 100, digits: 1 },
+  { label: 'Total de Trades', key: 'total', format: 'num', digits: 0 },
 ]
 function DeltaBadge({ orig, val, higherBetter = true }) {
   if (orig == null || val == null) return null
@@ -66,16 +66,16 @@ function DeltaBadge({ orig, val, higherBetter = true }) {
 // ─── MM Sim helpers ──────────────────────────────────────────────────────────
 const COLORS = ['#58a6ff', '#3fb950', '#d29922', '#f85149', '#bc8cff', '#79c0ff']
 const MM_TYPES = [
-  { value: 'fixed_lots', label: 'Fixed Lots' },
+  { value: 'fixed_lots', label: 'Lotes Fixos' },
   { value: 'risk_pct', label: '% do Capital' },
   { value: 'fixed_risk_money', label: 'Valor Fixo $' },
 ]
 const MM_KPI_KEYS = [
-  { label: 'Net Profit', key: 'net_profit', format: 'money', colored: true },
-  { label: 'Net Profit %', key: 'net_profit_pct', format: 'pct', colored: true },
+  { label: 'Lucro Líquido', key: 'net_profit', format: 'money', colored: true },
+  { label: 'Lucro Líquido %', key: 'net_profit_pct', format: 'pct', colored: true },
   { label: 'Sharpe', key: 'sharpe_ratio', digits: 3 },
-  { label: 'Max DD %', key: 'max_drawdown_pct', format: 'pct' },
-  { label: 'Annual Return %', key: 'annual_return_pct', format: 'pct', colored: true },
+  { label: 'DD Máx %', key: 'max_drawdown_pct', format: 'pct' },
+  { label: 'Retorno Anual %', key: 'annual_return_pct', format: 'pct', colored: true },
 ]
 let _idCtr = 0
 const uid = () => ++_idCtr
@@ -361,11 +361,11 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                       <div style={{ fontWeight: 600, color, marginBottom: 10 }}>{side}</div>
                       <div className="grid cols-2">
                         <Kpi label="Trades" value={d.trades} format="num" digits={0} />
-                        <Kpi label="Net Profit" value={d.net_profit} format="money" colored />
-                        <Kpi label="Win Rate" value={d.win_rate * 100} format="pct" digits={1} />
-                        <Kpi label="Profit Factor" value={d.profit_factor} digits={2} />
-                        <Kpi label="Avg Win" value={d.avg_win} format="money" colored />
-                        <Kpi label="Avg Loss" value={d.avg_loss} format="money" colored />
+                        <Kpi label="Lucro Líquido" value={d.net_profit} format="money" colored />
+                        <Kpi label="Taxa de Acerto" value={d.win_rate * 100} format="pct" digits={1} />
+                        <Kpi label="Fator de Lucro" value={d.profit_factor} digits={2} />
+                        <Kpi label="Média Ganhos" value={d.avg_win} format="money" colored />
+                        <Kpi label="Média Perdas" value={d.avg_loss} format="money" colored />
                       </div>
                     </div>
                   )
@@ -643,8 +643,8 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                     <div key={label}>
                       <div style={{ color, fontWeight: 600, marginBottom: 8 }}>{label}</div>
                       <div className="grid cols-2">
-                        <Kpi label="Net Profit" value={m.net_profit} format="money" colored />
-                        <Kpi label="Max DD %" value={m.max_drawdown_pct} format="pct" />
+                        <Kpi label="Lucro Líquido" value={m.net_profit} format="money" colored />
+                        <Kpi label="DD Máx %" value={m.max_drawdown_pct} format="pct" />
                         <Kpi label="Sharpe" value={m.sharpe_ratio} digits={3} />
                         <Kpi label="Win Rate" value={(m.win_rate || 0) * 100} format="pct" digits={1} />
                       </div>
@@ -743,7 +743,7 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                   <>
                     <h3 style={{ color: 'var(--muted)', fontSize: 13, marginTop: 20 }}>Performance por ano (regime analysis)</h3>
                     <table>
-                      <thead><tr><th>Ano</th><th>Trades</th><th>Net Profit</th><th>Win Rate</th><th>Max DD %</th><th>Sharpe (anual)</th></tr></thead>
+                      <thead><tr><th>Ano</th><th>Trades</th><th>Lucro Líquido</th><th>Taxa de Acerto</th><th>DD Máx %</th><th>Sharpe (anual)</th></tr></thead>
                       <tbody>
                         {suite.regime_by_year.map(r => (
                           <tr key={r.year}>
@@ -817,7 +817,7 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                 </div>
                 <div className="grid cols-2" style={{ marginTop: 14 }}>
                   <div>
-                    <div className="muted small" style={{ marginBottom: 6 }}>Distribuição de Net Profit</div>
+                    <div className="muted small" style={{ marginBottom: 6 }}>Distribuição de Lucro Líquido</div>
                     <HistogramChart edges={mcResult.net_profit_hist.edges} counts={mcResult.net_profit_hist.counts} />
                   </div>
                   <div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { runTickMonteCarlo, fetchRunTicks, listRunningMT5, errorMessage } from '../services/api'
+import { runTickMonteCarlo, fetchRunTicks, errorMessage } from '../services/api'
 
 function StatusBanner({ overall, passes, total }) {
   const bg = overall === 'green' ? 'rgba(56,139,56,0.15)'
@@ -68,34 +68,18 @@ export function TickMonteCarlo({ runId, ticksPath }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Auto-fetch state
   const [fetching, setFetching] = useState(false)
-  const [mt5List, setMt5List] = useState(null)
-  const [selectedTerminal, setSelectedTerminal] = useState('')
 
   useEffect(() => {
     if (ticksPath) setPath(ticksPath)
   }, [ticksPath])
 
-  const loadMT5List = async () => {
-    try {
-      const list = await listRunningMT5()
-      setMt5List(list)
-      if (list.length === 1) setSelectedTerminal(list[0].terminal_exe)
-    } catch (e) {
-      setError(errorMessage(e))
-    }
-  }
-
   const doAutoFetch = async () => {
-    const terminal = selectedTerminal || mt5List?.[0]?.terminal_exe
-    if (!terminal || !runId) return
+    if (!runId) return
     setFetching(true); setError('')
     try {
-      const r = await fetchRunTicks(runId, terminal)
+      const r = await fetchRunTicks(runId)
       setPath(r.parquet_path)
-      setMt5List(null)
-      setError('')
     } catch (e) {
       setError(errorMessage(e))
     } finally { setFetching(false) }
@@ -141,35 +125,11 @@ export function TickMonteCarlo({ runId, ticksPath }) {
         ) : (
           <div>
             <div className="muted small" style={{ marginBottom: 8 }}>
-              Baixar ticks automaticamente do MT5 (usa o mesmo histórico do backtest):
+              Baixar ticks do mesmo MT5 usado no backtest (símbolo e período já configurados):
             </div>
-            {!mt5List ? (
-              <button style={{ fontSize: 12 }} onClick={loadMT5List}>
-                Detectar MT5 rodando
-              </button>
-            ) : mt5List.length === 0 ? (
-              <span className="muted small">Nenhum MT5 em execução. Abra o terminal e tente de novo.</span>
-            ) : (
-              <div className="row" style={{ gap: 8 }}>
-                {mt5List.length > 1 && (
-                  <div style={{ flex: 3 }}>
-                    <select value={selectedTerminal} onChange={e => setSelectedTerminal(e.target.value)}>
-                      {mt5List.map(t => (
-                        <option key={t.terminal_exe} value={t.terminal_exe}>
-                          {t.broker || t.terminal_exe}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {mt5List.length === 1 && (
-                  <span className="small muted">{mt5List[0].broker || mt5List[0].terminal_exe}</span>
-                )}
-                <button disabled={fetching} onClick={doAutoFetch} style={{ fontSize: 12 }}>
-                  {fetching ? 'Baixando ticks…' : 'Buscar ticks do MT5'}
-                </button>
-              </div>
-            )}
+            <button disabled={fetching || !runId} style={{ fontSize: 12 }} onClick={doAutoFetch}>
+              {fetching ? 'Baixando ticks…' : 'Buscar ticks do MT5'}
+            </button>
           </div>
         )}
         {!path && (

@@ -15,6 +15,8 @@ from services import (
     equity_control as ec,
     mm_simulator as mms,
     monte_carlo as mc,
+    mt5_env,
+    mt5_processes,
     mt5_report,
     mt5_ticks_auto,
     robustness,
@@ -420,15 +422,34 @@ def forward_compare(req: ForwardCompareRequest) -> dict[str, Any]:
 
 # ----------------------------------------------------------------- Fetch Ticks (auto)
 class FetchTicksRequest(BaseModel):
-    terminal_exe: str
+    terminal_exe: str | None = None  # opcional — auto-detecta se omitido
+
+
+def _resolve_terminal_exe(terminal_exe: str | None) -> str:
+    """Retorna o caminho do terminal MT5 a usar, auto-detectando se necessário."""
+    if terminal_exe:
+        return terminal_exe
+    # 1. Prefere terminal em execução (mais provável de ter o histórico carregado)
+    running = mt5_processes.detect_running_mt5()
+    if running:
+        return running[0].terminal_exe
+    # 2. Fallback: primeira instalação detectada no sistema
+    installs = mt5_env.detect_installations()
+    if installs:
+        return str(installs[0].terminal_exe)
+    raise HTTPException(
+        400,
+        "Nenhum terminal MT5 encontrado. Abra o MT5 e tente novamente, "
+        "ou informe o caminho do terminal manualmente.",
+    )
 
 
 @router.post("/runs/{run_id}/fetch-ticks")
-def fetch_run_ticks(run_id: str, req: FetchTicksRequest) -> dict:
+def fetch_run_ticks(run_id: str, req: FetchTicksRequest = FetchTicksRequest()) -> dict:
     """Baixa ticks do MT5 automaticamente usando os metadados do run (símbolo + datas).
 
-    O parquet salvo fica armazenado no run e é usado automaticamente por
-    `mae-mfe-ticks` e `tick-monte-carlo` sem precisar informar o caminho manualmente.
+    `terminal_exe` é opcional — se omitido, detecta o MT5 em execução ou a
+    primeira instalação encontrada no sistema.
     """
     storage.init_db()
     run = storage.get_run(run_id)
@@ -454,9 +475,11 @@ def fetch_run_ticks(run_id: str, req: FetchTicksRequest) -> dict:
     except ValueError:
         raise HTTPException(400, f"Datas inválidas no run: {from_date!r} / {to_date!r}")
 
+    terminal = _resolve_terminal_exe(req.terminal_exe)
+
     try:
         result = mt5_ticks_auto.fetch_ticks(
-            terminal_exe=req.terminal_exe,
+            terminal_exe=terminal,
             symbol=symbol,
             from_datetime=from_dt,
             to_datetime=to_dt,

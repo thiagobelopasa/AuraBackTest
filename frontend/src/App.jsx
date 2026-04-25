@@ -29,10 +29,16 @@ function App() {
   const [tab, setTab] = useState('home')
   const [currentRunId, setCurrentRunId] = useState('')
   const [quickStartOpen, setQuickStartOpen] = useState(false)
+  const [triagePreloadedData, setTriagePreloadedData] = useState(null)
 
   const openRun = (id) => {
     setCurrentRunId(id)
     setTab('analysis')
+  }
+
+  const navigateToTriage = (data) => {
+    setTriagePreloadedData(data)
+    setTab('triage')
   }
 
   return (
@@ -45,7 +51,7 @@ function App() {
           <div className="brand-logo">A</div>
           <div className="brand-text">
             <h1>Aura<span className="accent">BackTest</span></h1>
-            <div className="subtitle">Analytics para traders profissionais</div>
+            <div className="subtitle">Otimização de automação para traders profissionais</div>
           </div>
         </div>
         <div className="topbar-right">
@@ -78,8 +84,8 @@ function App() {
         {tab === 'home' && <HomePage onNavigate={setTab} />}
         {tab === 'backtest' && <BacktestPage onRunSaved={openRun} />}
         {tab === 'analysis' && <AnalysisPage currentRunId={currentRunId} onRunIdChange={setCurrentRunId} />}
-        {tab === 'liveopt' && <LiveOptPage onOpenRun={openRun} />}
-        {tab === 'triage' && <TriagePage onOpenRun={openRun} />}
+        {tab === 'liveopt' && <LiveOptPage onOpenRun={openRun} onNavigateToTriage={navigateToTriage} />}
+        {tab === 'triage' && <TriagePage onOpenRun={openRun} preloadedData={triagePreloadedData} onClearPreload={() => setTriagePreloadedData(null)} />}
         {tab === 'portfolio' && <PortfolioPage />}
         {tab === 'history' && <HistoryPage onOpenRun={openRun} />}
       </div>
