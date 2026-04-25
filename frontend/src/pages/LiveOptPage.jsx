@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  startLiveOpt, stopLiveOpt, clearLiveOpt, liveOptSnapshot, openLiveOptStream,
+  startLiveOpt, stopLiveOpt, clearLiveOpt, clearLiveOptFiles, liveOptSnapshot, openLiveOptStream,
   instrumentEA, openTopAsRuns, sessionToTriage, evalCustomFormula, errorMessage,
 } from '../services/api'
 import { downloadCSV } from '../services/csv'
@@ -159,6 +159,14 @@ export function LiveOptPage({ onOpenRun }) {
   const clear = async () => {
     try { await clearLiveOpt(); setPasses([]) }
     catch (e) { toast.error('Falha', errorMessage(e)) }
+  }
+  const clearFiles = async () => {
+    try {
+      const r = await clearLiveOptFiles()
+      setPasses([])
+      toast.success('Limpo', `${r.cleared_files} arquivos processados removidos do diretório`)
+    }
+    catch (e) { toast.error('Falha ao limpar arquivos', errorMessage(e)) }
   }
 
   const exportCSV = () => {
@@ -331,6 +339,9 @@ export function LiveOptPage({ onOpenRun }) {
                   <button disabled={loading} onClick={stop}>Parar coleta</button>
                 </ContextualTooltip>}
             <button className="ghost" disabled={loading || !passes.length} onClick={clear}>Limpar tela</button>
+            <ContextualTooltip text="Remove arquivos processados do diretório para evitar re-coleta">
+              <button className="ghost" disabled={loading} onClick={clearFiles} style={{ opacity: 0.7 }}>🗑️ Limpar arquivos</button>
+            </ContextualTooltip>
             <button className="ghost" disabled={!passes.length} onClick={exportCSV}>Exportar CSV</button>
           </div>
         </div>

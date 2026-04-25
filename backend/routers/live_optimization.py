@@ -100,6 +100,32 @@ def clear() -> dict[str, Any]:
     return {"cleared": True}
 
 
+@router.post("/clear-files")
+def clear_files() -> dict[str, Any]:
+    """Limpa arquivos processados do diretório de watch.
+
+    Evita que passes antigos sejam recoletados quando você para e reinicia.
+    Remove .json.processed e .json.error — deixa .json (em processamento) intactos.
+    """
+    if not watcher.watch_dir.exists():
+        return {"cleared_count": 0, "error": "watch_dir não existe"}
+
+    cleared = 0
+    for fname in watcher.watch_dir.iterdir():
+        if fname.is_file() and (fname.suffix in (".processed", ".error") or fname.name.endswith(".json.processed") or fname.name.endswith(".json.error")):
+            try:
+                fname.unlink()
+                cleared += 1
+            except OSError:
+                pass
+
+    # Também limpa o buffer em memória
+    with watcher._lock:  # noqa: SLF001
+        watcher._passes = []
+
+    return {"cleared_files": cleared, "cleared_memory": True}
+
+
 def _current_session_id() -> str | None:
     return watcher._session_id  # noqa: SLF001
 

@@ -190,6 +190,9 @@ export const stopLiveOpt = () =>
 export const clearLiveOpt = () =>
   api.post('/live-optimization/clear').then(r => r.data)
 
+export const clearLiveOptFiles = () =>
+  api.post('/live-optimization/clear-files').then(r => r.data)
+
 export const liveOptSnapshot = () =>
   api.get('/live-optimization/snapshot').then(r => r.data)
 
