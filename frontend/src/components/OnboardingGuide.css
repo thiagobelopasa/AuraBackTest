@@ -1,0 +1,241 @@
+.onboarding-toggle {
+  background: rgba(212,175,95,0.1);
+  border: 1px solid rgba(212,175,95,0.3);
+  color: var(--gold);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms;
+}
+
+.onboarding-toggle:hover {
+  background: rgba(212,175,95,0.2);
+  border-color: rgba(212,175,95,0.5);
+}
+
+.onboarding-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 200ms;
+}
+
+.onboarding-modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  animation: slideUp 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--border);
+}
+
+.onboarding-header h2 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.onboarding-close {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms;
+}
+
+.onboarding-close:hover {
+  color: var(--text);
+  transform: scale(1.1);
+}
+
+.onboarding-content {
+  padding: 28px;
+}
+
+/* Phase indicator */
+.phase-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.phase-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 200ms;
+  background: var(--border);
+  color: var(--muted);
+  border: 2px solid var(--border);
+}
+
+.phase-dot.active {
+  transform: scale(1.15);
+  color: #fff;
+  border-color: currentColor;
+  box-shadow: 0 0 0 8px rgba(212,175,95,0.1);
+}
+
+.phase-dot.completed {
+  color: #fff;
+}
+
+.phase-dot:hover {
+  border-color: currentColor;
+}
+
+/* Phase content */
+.phase-content {
+  margin-bottom: 28px;
+}
+
+.phase-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.phase-description {
+  margin: 0 0 20px 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.phase-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.detail-bullet {
+  flex-shrink: 0;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Action buttons */
+.onboarding-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.btn-primary, .btn-secondary {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: #1A1208;
+  flex: 1.2;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212,175,95,0.3);
+}
+
+.btn-secondary {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--border);
+  color: var(--text);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-done {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 150ms;
+}
+
+.btn-done:hover {
+  background: rgba(212,175,95,0.08);
+  border-color: rgba(212,175,95,0.3);
+  color: var(--gold-dim);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

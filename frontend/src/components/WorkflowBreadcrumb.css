@@ -1,0 +1,56 @@
+.workflow-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-step {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: all 150ms;
+  flex-shrink: 0;
+}
+
+.breadcrumb-step.active {
+  border-width: 2px;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(212,175,95,0.1);
+}
+
+.step-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: color 150ms;
+}
+
+.breadcrumb-arrow {
+  color: var(--muted);
+  opacity: 0.4;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .breadcrumb-arrow {
+    display: none;
+  }
+
+  .workflow-breadcrumb {
+    gap: 8px;
+  }
+
+  .breadcrumb-step {
+    padding: 6px 10px;
+  }
+
+  .step-label {
+    font-size: 11px;
+  }
+}

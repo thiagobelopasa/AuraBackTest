@@ -1,0 +1,56 @@
+.contextual-tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.contextual-tooltip {
+  position: absolute;
+  background: #1a1a1a;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: tooltipFade 150ms;
+  max-width: 200px;
+  white-space: normal;
+}
+
+.contextual-tooltip-bottom {
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.contextual-tooltip-top {
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.contextual-tooltip-left {
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-100%);
+}
+
+.contextual-tooltip-right {
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@keyframes tooltipFade {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

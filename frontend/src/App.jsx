@@ -1,120 +1,96 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
+import { HomePage } from './pages/HomePage'
+import { BacktestPage } from './pages/BacktestPage'
+import { AnalysisPage } from './pages/AnalysisPage'
+import { HistoryPage } from './pages/HistoryPage'
+import { TriagePage } from './pages/TriagePage'
+import { LiveOptPage } from './pages/LiveOptPage'
+import { PortfolioPage } from './pages/PortfolioPage'
+import { TrialBanner } from './components/TrialBanner'
+import { BackendStatus } from './components/BackendStatus'
+import { UpdateBanner } from './components/UpdateBanner'
+import { ToastProvider } from './components/Toast'
+import { OnboardingGuide } from './components/OnboardingGuide'
+import { WorkflowBreadcrumb } from './components/WorkflowBreadcrumb'
+import { QuickStart } from './components/QuickStart'
+
+const TABS = [
+  { id: 'home', label: 'Começar' },
+  { id: 'liveopt', label: 'Otimização ao vivo' },
+  { id: 'triage', label: 'Análise de Otimização' },
+  { id: 'backtest', label: 'Backtest Aura' },
+  { id: 'analysis', label: 'Backtest Individual' },
+  { id: 'portfolio', label: 'Portfólio' },
+  { id: 'history', label: 'Histórico' },
+]
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tab, setTab] = useState('home')
+  const [currentRunId, setCurrentRunId] = useState('')
+  const [quickStartOpen, setQuickStartOpen] = useState(false)
+
+  const openRun = (id) => {
+    setCurrentRunId(id)
+    setTab('analysis')
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <ToastProvider>
+    <div className="app">
+      <TrialBanner />
+      <UpdateBanner />
+      <div className="topbar">
+        <div className="brand">
+          <div className="brand-logo">A</div>
+          <div className="brand-text">
+            <h1>Aura<span className="accent">BackTest</span></h1>
+            <div className="subtitle">Analytics para traders profissionais</div>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+        <div className="topbar-right">
+          <button
+            className="quickstart-btn"
+            onClick={() => setQuickStartOpen(!quickStartOpen)}
+            title="Painel de início rápido"
+          >
+            📌
+          </button>
+          <OnboardingGuide onPhaseChange={setTab} currentTab={tab} />
+          <BackendStatus />
         </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </div>
+      <div className="tabs">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            className={'tab' + (tab === t.id ? ' active' : '')}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <div className="content">
+        {(tab === 'liveopt' || tab === 'triage' || tab === 'analysis') && (
+          <WorkflowBreadcrumb currentTab={tab} />
+        )}
+        {tab === 'home' && <HomePage onNavigate={setTab} />}
+        {tab === 'backtest' && <BacktestPage onRunSaved={openRun} />}
+        {tab === 'analysis' && <AnalysisPage currentRunId={currentRunId} onRunIdChange={setCurrentRunId} />}
+        {tab === 'liveopt' && <LiveOptPage onOpenRun={openRun} />}
+        {tab === 'triage' && <TriagePage onOpenRun={openRun} />}
+        {tab === 'portfolio' && <PortfolioPage />}
+        {tab === 'history' && <HistoryPage onOpenRun={openRun} />}
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <QuickStart
+        isOpen={quickStartOpen}
+        onClose={() => setQuickStartOpen(false)}
+        onNavigate={setTab}
+      />
+    </div>
+    </ToastProvider>
   )
 }
 

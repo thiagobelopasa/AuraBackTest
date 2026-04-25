@@ -2,8 +2,24 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 pandas>=2.2.2
 numpy>=2.0.0
-yfinance==0.2.43
-backtesting>=0.3.3
 pydantic==2.8.2
 python-dotenv==1.0.1
 httpx==0.27.2
+python-multipart>=0.0.9
+
+# Engine de backtest: MT5 nativo + análise robusta em Python
+MetaTrader5>=5.0.45
+pyarrow>=17.0.0
+polars>=1.10.0
+scipy>=1.14.0
+scikit-learn>=1.5.0
+
+# Parse de reports HTM do MT5 Strategy Tester
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# Detecção de processos MT5 rodando + contexto
+psutil>=6.0.0
+
+# Testes (rodar com: python -m pytest tests/)
+pytest>=8.0.0

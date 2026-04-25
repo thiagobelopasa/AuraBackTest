@@ -1,7 +1,7 @@
 {
   "name": "aurabacktest",
   "productName": "AuraBackTest",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Backtesting MQL5 com analytics estilo QuantAnalyzer",
   "author": {
     "name": "Thiago Belopasa",
@@ -64,13 +64,14 @@
       "publisherName": "Thiago Belopasa"
     },
     "nsis": {
-      "oneClick": false,
+      "oneClick": true,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
+      "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "AuraBackTest",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true
     },
     "publish": {
       "provider": "github",

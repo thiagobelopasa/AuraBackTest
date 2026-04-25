@@ -40,3 +40,9 @@ logs/
 *.swp
 .DS_Store
 Thumbs.db
+
+# Electron build outputs
+backend-dist/
+release/
+electron/node_modules/
+frontend/dist/

@@ -1,0 +1,111 @@
+AuraBackTest — versão web (QA / teste) v0.4.0
+================================================
+
+Oi! Você recebeu essa versão do AuraBackTest pra ajudar testando e
+reportando bugs. Obrigado!
+
+REQUISITOS
+----------
+1. Windows 10 ou 11
+2. Python 3.11 ou mais recente instalado
+   - Baixe em: https://www.python.org/downloads/
+   - IMPORTANTE: marque "Add python.exe to PATH" durante a instalação
+3. MetaTrader 5 instalado (com pelo menos um EA que você queira testar)
+
+COMO RODAR
+----------
+1. Extraia o ZIP numa pasta de sua preferência (ex: C:\AuraBackTest-Web\)
+2. Clique duas vezes em "AuraBackTest-Web.bat"
+3. Na primeira vez, ele vai instalar dependências Python (5-10 min)
+4. Quando subir, o navegador abre automaticamente em:
+   http://localhost:8000/app
+
+FLUXO PRINCIPAL (coleta + análise)
+----------------------------------
+1. Aba "Coleta ao vivo"
+2. Seção "1. Preparar robô":
+   - Selecione seu MT5 (auto-preenchido se só tem um rodando; bolinha
+     verde indica qual está ativo agora)
+   - Selecione o EA (.mq5) que você quer otimizar
+   - Clique "Preparar robô" → gera e compila "<nome>_Aura.ex5"
+3. Seção "2. Coleta ao vivo":
+   - Informe label/timeframe
+   - Clique "Iniciar coleta"
+4. Abra o MT5 → Strategy Tester:
+   - Expert Advisor: selecione "<nome>_Aura"
+   - Configure otimização como sempre (ranges, ativo, período)
+   - Clique Start
+5. No AuraBackTest você vê os passes chegando em tempo real, ranqueados
+   pela métrica escolhida OU por FÓRMULA CUSTOMIZADA
+   (ex: net_profit / max_drawdown_pct).
+6. Quando terminar:
+   - "Abrir top N como runs" → cria análises individuais completas
+   - "Triagem" → análise de robustez por vizinhança
+   - "Exportar CSV"
+   - No Histórico: cálculo de PBO (Probability of Backtest Overfitting)
+
+NOVIDADES v0.4.0
+----------------
+- Design Aura Platforms (dark premium, dourado, tipografia Inter)
+- Auto-detect MT5 rodando (sem precisar escolher manualmente)
+- Favoritos (★) em runs e sessions; filtro por favoritos
+- Export CSV de passes e runs
+- Toasts globais com feedback em tempo real
+- Auto-fetch de ticks do MT5 (sem CSV manual)
+- PBO via CSCV (overfit check estatístico)
+- FÓRMULAS CUSTOMIZADAS pra ranquear passes (parser seguro AST)
+- Multi-símbolo: rode o mesmo EA em N símbolos de uma vez
+- Forward live vs backtest: compare execução real com histórico
+- Walk-Forward Analysis end-to-end (job em background, polling)
+- 28 testes automatizados (pytest)
+
+O QUE TESTAR (foco do QA)
+-------------------------
+- Auto-instrumentação: testa com vários EAs diferentes.
+  Tem EA em que falhou compilar? Me envia o log (botão dentro do UI).
+- Coleta em tempo real: passes chegam? Contagem bate com o que MT5 mostra?
+- Favoritos: consegue marcar/desmarcar ★?
+- Histórico: sessions ficam salvas? Exportar CSV funciona?
+- PBO/Triagem: resultado faz sentido?
+- Fórmula customizada: testa exemplos como:
+    sharpe_ratio * profit_factor
+    net_profit / max_drawdown_pct
+    (sortino_ratio + calmar_ratio) / 2
+- Execução individual na Triagem: roda backtest e abre na aba Análise?
+- Multi-símbolo: funciona rodar 3+ símbolos em sequência?
+- Forward compare (se tiver conta live): trades reais batem com backtest?
+- Qualquer "Network Error" ou tela em branco.
+
+TESTES AUTOMATIZADOS
+--------------------
+Pra rodar os testes do backend:
+
+   cd backend
+   .venv\Scripts\activate.bat
+   python -m pytest tests/ -v
+
+Devem passar 28 testes. Se falhar algum, me mande o output.
+
+DIAGNÓSTICO
+-----------
+- Bolinha no topo direito:
+  VERDE = backend ok
+  VERMELHA = backend não responde (fecha o .bat e abre de novo)
+- F12 abre DevTools do navegador; aba Console mostra erros JS
+- Logs do backend saem no terminal que ficou aberto
+
+COMO ME REPORTAR BUG
+--------------------
+Me mande:
+1. O que você fez (passo a passo)
+2. O que esperava vs o que aconteceu
+3. Print da tela
+4. Print do console (F12) se houver erro vermelho
+5. Print do terminal do backend se relevante
+
+ENCERRANDO
+----------
+Feche a janela preta do terminal pra parar o servidor.
+Dados ficam salvos em backend\aurabacktest.db.
+
+Contato: thiago.belo.pasa@gmail.com
