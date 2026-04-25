@@ -47,6 +47,24 @@ class StartResponse(BaseModel):
     message: str
 
 
+def _detect_stale_files(watch_dir: Path) -> dict[str, int]:
+    """Detecta arquivos antigos no diretório de watch.
+
+    Retorna contagem de .json.processed e .json.error (sinais de coletas anteriores).
+    """
+    if not watch_dir.exists():
+        return {"processed": 0, "error": 0}
+
+    counts = {"processed": 0, "error": 0}
+    for fname in watch_dir.iterdir():
+        if fname.is_file():
+            if fname.name.endswith(".json.processed"):
+                counts["processed"] += 1
+            elif fname.name.endswith(".json.error"):
+                counts["error"] += 1
+    return counts
+
+
 @router.post("/start", response_model=StartResponse)
 def start(req: StartRequest) -> StartResponse:
     # Se havia uma session ativa anterior, encerra antes de começar nova.
@@ -67,11 +85,18 @@ def start(req: StartRequest) -> StartResponse:
         label=req.label,
     )
     watcher.start(session_id=session_id)
+
+    # Detectar arquivos antigos e avisar ao usuário
+    stale = _detect_stale_files(watcher.watch_dir)
+    warning = ""
+    if stale["processed"] > 0 or stale["error"] > 0:
+        warning = f"⚠️ Detectados {stale['processed']} arquivos processados e {stale['error']} com erro. Clique em '🗑️ Limpar arquivos' antes de iniciar."
+
     return StartResponse(
         session_id=session_id,
         running=watcher.is_running(),
         watch_dir=str(watcher.watch_dir),
-        message=f"Monitorando {watcher.watch_dir}. Rode a otimização no MT5.",
+        message=warning or f"Monitorando {watcher.watch_dir}. Rode a otimização no MT5.",
     )
 
 
@@ -81,7 +106,23 @@ def stop() -> dict[str, Any]:
     watcher.stop()
     if sid:
         storage.end_live_session(sid)
-    return {"running": watcher.is_running(), "session_id": sid}
+
+    # Auto-limpar arquivos processados para evitar re-coleta acidental
+    cleared_files = 0
+    if watcher.watch_dir.exists():
+        for fname in watcher.watch_dir.iterdir():
+            if fname.is_file() and (fname.name.endswith(".json.processed") or fname.name.endswith(".json.error")):
+                try:
+                    fname.unlink()
+                    cleared_files += 1
+                except OSError:
+                    pass
+
+    return {
+        "running": watcher.is_running(),
+        "session_id": sid,
+        "auto_cleared_files": cleared_files,
+    }
 
 
 @router.get("/snapshot")

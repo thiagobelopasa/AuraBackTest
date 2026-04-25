@@ -141,8 +141,14 @@ export function LiveOptPage({ onOpenRun }) {
       })
       setSessionId(r.session_id); setRunning(r.running); setWatchDir(r.watch_dir)
       setPasses([])
-      toast.success('Coleta iniciada',
-        `Rode a otimização no MT5. Session: ${r.session_id.slice(0,8)}…`)
+
+      // Mostrar aviso se detectou arquivos antigos
+      if (r.message && r.message.includes('⚠️')) {
+        toast.error('Aviso de Arquivos Antigos', r.message, { timeout: 8000 })
+      } else {
+        toast.success('Coleta iniciada',
+          `Rode a otimização no MT5. Session: ${r.session_id.slice(0,8)}…`)
+      }
     } catch (e) { toast.error('Falha ao iniciar', errorMessage(e)) }
     finally { setLoading(false) }
   }
@@ -151,7 +157,11 @@ export function LiveOptPage({ onOpenRun }) {
     try {
       const r = await stopLiveOpt()
       setRunning(r.running)
-      toast.info('Coleta parada', `${passes.length} passes salvos. Veja no Histórico.`)
+      const cleared = r.auto_cleared_files || 0
+      toast.info(
+        'Coleta parada',
+        `${passes.length} passes salvos. ${cleared > 0 ? `${cleared} arquivos antigos removidos.` : ''} Veja no Histórico.`
+      )
     }
     catch (e) { toast.error('Falha ao parar', errorMessage(e)) }
     finally { setLoading(false) }
