@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AuraBackTest — Download</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --green: #3fb950;
+      --green-dim: #238636;
+      --blue: #58a6ff;
+      --yellow: #d29922;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .logo {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 0.4rem;
+    }
+    .logo span { color: var(--green); }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 1rem;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.4rem;
+      width: 100%;
+      max-width: 520px;
+      text-align: center;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(63,185,80,.12);
+      border: 1px solid rgba(63,185,80,.3);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.82rem;
+      color: var(--green);
+      margin-bottom: 1.6rem;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .version-line {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .version-line .v { color: var(--muted); font-size: 1rem; font-weight: 400; }
+
+    .meta {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--green-dim);
+      border: 1px solid var(--green);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.8rem 2rem;
+      text-decoration: none;
+      transition: opacity .15s;
+      cursor: pointer;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 0.75rem;
+    }
+    .btn-download:hover { opacity: 0.85; }
+    .btn-download svg { flex-shrink: 0; }
+
+    .btn-notes {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      padding: 0.6rem 1.5rem;
+      text-decoration: none;
+      transition: border-color .15s, color .15s;
+      width: 100%;
+    }
+    .btn-notes:hover { border-color: var(--blue); color: var(--blue); }
+
+    .info-list {
+      list-style: none;
+      margin: 2rem 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      text-align: left;
+    }
+    .info-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.87rem;
+      color: var(--muted);
+    }
+    .info-list li .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .req-badge {
+      background: rgba(210,153,34,.1);
+      border: 1px solid rgba(210,153,34,.3);
+      border-radius: 6px;
+      padding: 0.7rem 1rem;
+      font-size: 0.82rem;
+      color: var(--yellow);
+      text-align: left;
+      margin-top: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,.15);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer {
+      margin-top: 2.5rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .footer a { color: var(--blue); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    #error-box {
+      display: none;
+      background: rgba(248,81,73,.1);
+      border: 1px solid rgba(248,81,73,.4);
+      border-radius: 8px;
+      padding: 0.9rem 1.2rem;
+      font-size: 0.85rem;
+      color: #f85149;
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">Aura<span>BackTest</span></div>
+  <p class="tagline">Motor de backtesting profissional para estratégias MT5</p>
+
+  <div class="card">
+    <div class="status-badge"><span class="dot"></span> Disponível para download</div>
+
+    <div id="error-box"></div>
+
+    <div class="version-line">
+      <span id="version-text"><span class="spinner"></span></span>
+    </div>
+    <div class="meta" id="meta-text">Verificando versão mais recente…</div>
+
+    <a id="btn-dl" class="btn-download" href="#" onclick="return false;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span id="btn-text">Aguardando…</span>
+    </a>
+
+    <a id="btn-notes" class="btn-notes" href="#" target="_blank" rel="noopener">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+      Ver notas da versão
+    </a>
+
+    <ul class="info-list">
+      <li><span class="icon">✅</span><span>Instalação silenciosa — sem configurações extras</span></li>
+      <li><span class="icon">🔄</span><span>Atualização automática — o app avisa quando há nova versão</span></li>
+      <li><span class="icon">🐍</span><span>Python <strong>não é necessário</strong> — backend já incluso no instalador</span></li>
+      <li><span class="icon">📊</span><span>Requer MetaTrader 5 instalado para rodar backtests</span></li>
+    </ul>
+
+    <div class="req-badge">
+      ⚠️ <strong>Requisitos mínimos:</strong> Windows 10/11 64-bit &nbsp;·&nbsp; MT5 instalado<br>
+      O instalador não precisa de Python nem Node.js.
+    </div>
+  </div>
+
+  <div class="footer">
+    Desenvolvido por <a href="mailto:thiago.belo.pasa@gmail.com">Thiago Belopasa</a><br>
+    <a id="footer-releases" href="#" target="_blank" rel="noopener">Todas as versões no GitHub</a>
+  </div>
+
+  <script>
+    const OWNER = 'thiagobelopasa'
+    const REPO  = 'AuraBackTest'
+    const API   = `https://api.github.com/repos/${OWNER}/${REPO}/releases/latest`
+
+    const $ = id => document.getElementById(id)
+
+    function showError(msg) {
+      const box = $('error-box')
+      box.textContent = `⚠️ ${msg}`
+      box.style.display = 'block'
+      $('version-text').textContent = '—'
+      $('meta-text').textContent = 'Não foi possível obter a versão mais recente.'
+      $('btn-text').textContent = 'Ir para releases no GitHub'
+      const fallback = `https://github.com/${OWNER}/${REPO}/releases/latest`
+      $('btn-dl').href = fallback
+      $('btn-dl').onclick = null
+    }
+
+    async function init() {
+      $('footer-releases').href = `https://github.com/${OWNER}/${REPO}/releases`
+
+      let data
+      try {
+        const res = await fetch(API, {
+          headers: { Accept: 'application/vnd.github+json' }
+        })
+        if (!res.ok) throw new Error(`GitHub API retornou ${res.status}`)
+        data = await res.json()
+      } catch (e) {
+        showError('Erro ao consultar GitHub: ' + e.message)
+        return
+      }
+
+      const version = data.tag_name || data.name || '?'
+      const releaseUrl = data.html_url || `https://github.com/${OWNER}/${REPO}/releases/latest`
+      const published = data.published_at
+        ? new Date(data.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        : null
+
+      // Encontra o .exe do instalador
+      const exeAsset = (data.assets || []).find(a =>
+        a.name.endsWith('.exe') && a.name.includes('Setup')
+      )
+
+      $('version-text').innerHTML = `AuraBackTest <span class="v">versão</span> ${version}`
+      $('meta-text').textContent = published ? `Lançado em ${published}` : 'Versão mais recente'
+      $('btn-notes').href = releaseUrl
+
+      if (!exeAsset) {
+        showError('Instalador (.exe) não encontrado neste release. Tente a página de releases.')
+        $('btn-dl').href = releaseUrl
+        $('btn-dl').onclick = null
+        return
+      }
+
+      const dlUrl = exeAsset.browser_download_url
+      const sizeMB = (exeAsset.size / 1024 / 1024).toFixed(0)
+
+      $('btn-text').textContent = `Baixar instalador  (${sizeMB} MB)`
+      $('btn-dl').href = dlUrl
+      $('btn-dl').onclick = null
+
+      // Download automático após 1.2s (tempo suficiente pro usuário ler a página)
+      setTimeout(() => {
+        const a = document.createElement('a')
+        a.href = dlUrl
+        a.download = exeAsset.name
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }, 1200)
+    }
+
+    init()
+  </script>
+</body>
+</html>

@@ -277,6 +277,51 @@ npm start
 
 ---
 
+## Distribuição — Instalador e Página de Download
+
+### Página de download (GitHub Pages)
+`docs/index.html` — landing page hospedada em `https://thiagobelopasa.github.io/AuraBackTest/`
+- Consulta a GitHub API para obter a versão mais recente automaticamente
+- Download do `.exe` começa após 1.2s sem clicar em nada
+- Exibe versão, tamanho e data do release em tempo real
+- Workflow: `.github/workflows/pages.yml` publica quando `docs/` muda no `main`
+
+**Para ativar GitHub Pages:**
+1. Vá em `Settings → Pages` no repositório GitHub
+2. Source: `GitHub Actions`
+3. Faça push do `docs/index.html` — o workflow cuida do resto
+
+### Auto-update (Electron)
+- `electron-updater` verifica a cada 30 min e ao abrir o app
+- `autoDownload: true` — baixa silenciosamente em background
+- `autoInstallOnAppQuit: true` — instala ao fechar o app
+- `quitAndInstall(true, true)` — silencioso + reabre o app
+- `latest.yml` gerado automaticamente pelo `electron-builder --publish always`
+- O app exibe `UpdateBanner.jsx` quando há versão disponível
+
+### Web ZIP (Python direto)
+`AuraBackTest-Web.bat` — launcher que verifica e instala Python automaticamente:
+1. Testa `python --version` e `py -3.11` — aceita qualquer 3.11+
+2. Se não encontrar: usa `winget install Python.Python.3.11` (silencioso)
+3. Relocaliza o executável após instalação (resolve problema de PATH na mesma sessão)
+4. Fallback manual: abre `python.org/downloads/` no browser
+5. Cria venv e instala `requirements.txt` na primeira execução
+
+### Build local (sem publicar)
+```powershell
+.\scripts\build-local.ps1
+# Gera: release/AuraBackTest-Setup-<versao>.exe
+```
+
+### Release para produção
+```bash
+git tag v0.5.1
+git push origin v0.5.1
+# GitHub Actions faz o build e publica automaticamente
+```
+
+---
+
 ## O que está PENDENTE / ideias futuras
 
 - **PBO via CSCV** (Probability of Backtest Overfitting) — exige matriz N_candidatos × N_subperíodos
