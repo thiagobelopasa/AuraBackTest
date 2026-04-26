@@ -26,7 +26,7 @@ binaries = []
 # C-extensions (numpy/pandas/lxml) precisam de collect_all — PyInstaller sozinho
 # perde os .pyd e DLLs, resultando em "Importing the numpy C-extensions failed"
 # na máquina do usuário final.
-for pkg in ("numpy", "pandas", "lxml", "bs4"):
+for pkg in ("numpy", "pandas", "lxml", "bs4", "scipy"):
     try:
         pkg_datas, pkg_binaries, pkg_hidden = collect_all(pkg)
         datas += pkg_datas
@@ -47,7 +47,7 @@ a = Analysis(
     runtime_hooks=[],
     excludes=[
         "tkinter", "matplotlib", "IPython", "jupyter", "notebook",
-        "sklearn", "scipy", "sympy", "tornado",
+        "sklearn", "sympy", "tornado",
     ],
     noarchive=False,
 )
