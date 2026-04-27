@@ -66,7 +66,13 @@ def ingest_report(req: IngestReportRequest) -> IngestReportResponse:
     deals = mt5_report.extract_deals_htm(path)
     trades = mt5_report.deals_to_trades(deals)
 
-    analysis = analytics.full_analysis(trades, initial_equity=req.deposit)
+    deposit = req.deposit
+    if deposit == 10_000.0:
+        parsed_deposit = parsed["metrics"].get("initial_deposit")
+        if parsed_deposit:
+            deposit = float(parsed_deposit)
+
+    analysis = analytics.full_analysis(trades, initial_equity=deposit)
 
     storage.init_db()
     storage.save_run(
@@ -77,14 +83,14 @@ def ingest_report(req: IngestReportRequest) -> IngestReportResponse:
         timeframe=req.timeframe,
         from_date=req.from_date.isoformat() if req.from_date else None,
         to_date=req.to_date.isoformat() if req.to_date else None,
-        deposit=req.deposit,
+        deposit=deposit,
         report_path=str(path),
         parameters=req.parameters,
         metrics=parsed["metrics"],
         label=req.label,
     )
     storage.save_trades(req.run_id, trades)
-    storage.save_analysis(req.run_id, req.deposit, analysis)
+    storage.save_analysis(req.run_id, deposit, analysis)
 
     return IngestReportResponse(
         run_id=req.run_id,
@@ -121,6 +127,11 @@ async def ingest_upload(
     trades = mt5_report.deals_to_trades(deals)
     if not trades:
         raise HTTPException(400, "Nenhum trade encontrado no HTM. Confira se é um report com tabela de deals.")
+
+    if deposit == 10_000.0:
+        parsed_deposit = parsed["metrics"].get("initial_deposit")
+        if parsed_deposit:
+            deposit = float(parsed_deposit)
 
     analysis = analytics.full_analysis(trades, initial_equity=deposit)
 

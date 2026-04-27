@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis,
   CartesianGrid, Tooltip, ReferenceLine, BarChart, Bar, Cell,
 } from 'recharts'
-import { getMaeMfeTicks, fetchRunTicks, errorMessage } from '../services/api'
+import { getMaeMfeTicks, fetchRunTicks, convertTicks, errorMessage } from '../services/api'
 
 const axisProps = { stroke: '#8b98a5', tick: { fontSize: 11 } }
 const tooltipStyle = {
@@ -52,15 +52,27 @@ function buildRHist(data) {
   return buckets
 }
 
+function deriveSymbolAndOutputDir(csvPath) {
+  const norm = csvPath.replace(/\\/g, '/')
+  const filename = norm.split('/').pop() || ''
+  const parentDir = norm.slice(0, norm.length - filename.length).replace(/\/$/, '')
+  const stem = filename.replace(/\.csv$/i, '')
+  const symbol = stem.split('_')[0] || stem
+  const sep = csvPath.includes('\\') ? '\\' : '/'
+  const outputDir = `${parentDir}${sep}${stem}_parquet`
+  return { symbol, outputDir }
+}
+
 function TickLoader({ runId, ticksPath, onLoad }) {
   const [path, setPath] = useState(ticksPath || '')
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState('')
   const [err, setErr] = useState('')
 
   useEffect(() => { if (ticksPath) setPath(ticksPath) }, [ticksPath])
 
   const doFetch = async () => {
-    setLoading(true); setErr('')
+    setLoading(true); setErr(''); setStatus('')
     try {
       const r = await fetchRunTicks(runId)
       setPath(r.parquet_path)
@@ -68,35 +80,55 @@ function TickLoader({ runId, ticksPath, onLoad }) {
       onLoad(result)
     } catch (e) {
       setErr(errorMessage(e))
-    } finally { setLoading(false) }
+    } finally { setLoading(false); setStatus('') }
   }
 
   const doCalc = async () => {
     if (!path || !runId) return
-    setLoading(true); setErr('')
+    setLoading(true); setErr(''); setStatus('')
     try {
-      const result = await getMaeMfeTicks(runId, path)
+      let target = path
+      if (/\.csv$/i.test(path)) {
+        setStatus('Convertendo CSV → Parquet (pode levar alguns minutos)...')
+        const { symbol, outputDir } = deriveSymbolAndOutputDir(path)
+        const info = await convertTicks({
+          csv_path: path,
+          output_dir: outputDir,
+          symbol,
+          partition: false,
+        })
+        target = `${info.parquet_dir}${path.includes('\\') ? '\\' : '/'}ticks.parquet`
+        setPath(target)
+      }
+      setStatus('Calculando MAE/MFE com ticks...')
+      const result = await getMaeMfeTicks(runId, target)
       onLoad(result)
     } catch (e) {
       setErr(errorMessage(e))
-    } finally { setLoading(false) }
+    } finally { setLoading(false); setStatus('') }
   }
+
+  const isCsv = /\.csv$/i.test(path)
+  const calcLabel = loading
+    ? (status || 'Calculando...')
+    : isCsv ? 'Converter e calcular' : 'Recalcular com ticks'
 
   return (
     <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(88,166,255,0.05)', borderRadius: 6, border: '1px solid #1f2a37' }}>
       <div className="muted small" style={{ marginBottom: 8 }}>
-        Calcular MAE/MFE reais com dados de tick (mais preciso que proxy)
+        Calcular MAE/MFE reais com dados de tick (mais preciso que proxy).
+        Aceita <code>.parquet</code> ou <code>.csv</code> exportado do MT5 (será convertido automaticamente).
       </div>
       {path ? (
         <div className="row" style={{ gap: 8 }}>
-          <div style={{ flex: 4, fontSize: 12, color: '#3fb950', display: 'flex', alignItems: 'center', gap: 6 }}>
-            ✓ <code style={{ color: '#8b98a5', fontSize: 11 }}>{path}</code>
+          <div style={{ flex: 4, fontSize: 12, color: isCsv ? '#d29922' : '#3fb950', display: 'flex', alignItems: 'center', gap: 6 }}>
+            {isCsv ? '⚙' : '✓'} <code style={{ color: '#8b98a5', fontSize: 11 }}>{path}</code>
             <button className="ghost" style={{ fontSize: 11, padding: '2px 6px' }}
               onClick={() => setPath('')}>trocar</button>
           </div>
           <div className="fit">
             <button disabled={loading} onClick={doCalc} style={{ fontSize: 12 }}>
-              {loading ? 'Calculando...' : 'Recalcular com ticks'}
+              {calcLabel}
             </button>
           </div>
         </div>
@@ -107,16 +139,17 @@ function TickLoader({ runId, ticksPath, onLoad }) {
           </button>
           <div style={{ flex: 4 }}>
             <input value={path} onChange={e => setPath(e.target.value)}
-              placeholder="ou informe caminho manual: C:/ticks/WIN/ticks.parquet"
+              placeholder="cole .parquet ou .csv (MT5): C:/ticks/US100.cash_xxx.csv"
               style={{ width: '100%', fontSize: 12 }} />
           </div>
           {path && (
             <button disabled={loading} onClick={doCalc} style={{ fontSize: 12 }}>
-              {loading ? 'Calculando...' : 'Calcular'}
+              {calcLabel}
             </button>
           )}
         </div>
       )}
+      {status && !err && <div className="muted small" style={{ marginTop: 6 }}>{status}</div>}
       {err && <div className="errbox" style={{ marginTop: 6, fontSize: 12 }}>{err}</div>}
     </div>
   )

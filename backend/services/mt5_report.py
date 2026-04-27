@@ -311,6 +311,8 @@ def deals_to_trades(deals: list[dict[str, Any]]) -> list[dict[str, Any]]:
     price_keys = ("price", "preço", "preco")
     profit_keys = ("profit", "lucro")
     balance_keys = ("balance", "saldo")
+    commission_keys = ("commission", "comissão", "comissao")
+    swap_keys = ("swap",)
 
     trades: list[dict[str, Any]] = []
     last_entry: dict[str, Any] | None = None
@@ -323,6 +325,9 @@ def deals_to_trades(deals: list[dict[str, Any]]) -> list[dict[str, Any]]:
             t_in = _dt(_get(last_entry, *time_keys))
             t_out = _dt(_get(d, *time_keys))
             duration = (t_out - t_in).total_seconds() if (t_in and t_out) else None
+            gross_profit = _f(_get(d, *profit_keys))
+            commission = _f(_get(last_entry, *commission_keys)) + _f(_get(d, *commission_keys))
+            swap = _f(_get(last_entry, *swap_keys)) + _f(_get(d, *swap_keys))
             trades.append(
                 {
                     "time_in": _get(last_entry, *time_keys),
@@ -332,7 +337,10 @@ def deals_to_trades(deals: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     "volume": _f(_get(d, "volume")),
                     "entry_price": _f(_get(last_entry, *price_keys)),
                     "exit_price": _f(_get(d, *price_keys)),
-                    "profit": _f(_get(d, *profit_keys)),
+                    "profit": gross_profit + commission + swap,
+                    "gross_profit": gross_profit,
+                    "commission": commission,
+                    "swap": swap,
                     "balance": _f(_get(d, *balance_keys)),
                     "duration_sec": duration,
                 }
