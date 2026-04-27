@@ -75,6 +75,13 @@ def _write_utf16(path: Path, text: str) -> None:
     path.write_text(text, encoding="utf-16")
 
 
+def _fmt_val(v: Any) -> str:
+    """Formata valor para .set file. MT5 exige bool em minúsculo (true/false)."""
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    return str(v)
+
+
 def generate_set_file(
     defaults: dict[str, Any],
     ranges: list[ParameterRange],
@@ -92,11 +99,11 @@ def generate_set_file(
     for name, default in defaults.items():
         r = range_map.get(name)
         if r is None:
-            lines.append(f"{name}={default}")
+            lines.append(f"{name}={_fmt_val(default)}")
         elif r.fixed_value is not None:
-            lines.append(f"{name}={r.fixed_value}")
+            lines.append(f"{name}={_fmt_val(r.fixed_value)}")
         else:
-            lines.append(f"{name}={default}||{r.start}||{r.step}||{r.stop}||Y")
+            lines.append(f"{name}={_fmt_val(default)}||{r.start}||{r.step}||{r.stop}||Y")
     _write_utf16(output_path, "\n".join(lines) + "\n")
     return output_path
 

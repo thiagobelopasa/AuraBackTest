@@ -111,6 +111,22 @@ export function TriagePage({ onOpenRun, preloadedData, onClearPreload }) {
     return Object.keys(p0.parameters).filter(k => typeof p0.parameters[k] === 'number')
   }, [data])
 
+  // Só inclui parâmetros que estão sendo otimizados (valor varia entre passes).
+  // Parâmetros fixos poluem a tabela e não ajudam na análise.
+  const varyingParamKeys = useMemo(() => {
+    if (!data?.passes?.length) return []
+    const valuesByKey = new Map()
+    for (const p of data.passes) {
+      for (const [k, v] of Object.entries(p.parameters || {})) {
+        if (!valuesByKey.has(k)) valuesByKey.set(k, new Set())
+        valuesByKey.get(k).add(String(v))
+      }
+    }
+    return Array.from(valuesByKey.entries())
+      .filter(([, vs]) => vs.size > 1)
+      .map(([k]) => k)
+  }, [data])
+
   useEffect(() => {
     if (numericParams.length >= 2 && !xParam) {
       setXParam(numericParams[0])
@@ -336,8 +352,8 @@ export function TriagePage({ onOpenRun, preloadedData, onClearPreload }) {
           <div style={{ overflowX: 'auto', marginTop: 16 }}>
             <table>
               <thead><tr>
+                <th></th>
                 <th style={{ width: 32 }}>#</th>
-                <th>Parâmetros</th>
                 <th style={{ color: '#58a6ff', cursor: 'help' }}
                   title="Robust Score % = (score do pass × estabilidade) / melhor da lista × 100. 100% = o melhor candidato desta lista. Baixo = pico isolado = suspeita de overfit.">
                   ⬡ Robust % (?)
@@ -364,7 +380,7 @@ export function TriagePage({ onOpenRun, preloadedData, onClearPreload }) {
                   title="Desvio padrão da métrica entre vizinhos. Baixo = platô consistente. Alto = ambiente irregular ao redor.">
                   Desvio (?)
                 </th>
-                <th></th>
+                {varyingParamKeys.map(k => <th key={k}>{k}</th>)}
               </tr></thead>
               <tbody>
                 {filtered.slice(0, 50).map((p, i) => {
@@ -377,19 +393,6 @@ export function TriagePage({ onOpenRun, preloadedData, onClearPreload }) {
                   const stabColor = stab >= 80 ? '#3fb950' : stab >= 60 ? '#d29922' : '#f85149'
                   return (
                     <tr key={p.pass_idx}>
-                      <td>{i + 1}</td>
-                      <td className="small"><code>{JSON.stringify(p.parameters)}</code></td>
-                      <td style={{ fontWeight: 700, color: rsColor }}>{rsPct.toFixed(1)}%</td>
-                      <td style={{ color: stabColor }}>{stab.toFixed(1)}%</td>
-                      <td>{p.neighbor_count}</td>
-                      <td style={{ fontWeight: 700, color: auraColor }}>{isNaN(aura) ? '—' : aura.toFixed(3)}</td>
-                      <td>{m.sortino_ratio?.toFixed(3) ?? '—'}</td>
-                      <td>{m.calmar_ratio?.toFixed(3) ?? '—'}</td>
-                      <td>{m.net_profit?.toFixed(2) ?? '—'}</td>
-                      <td>{m.profit_factor?.toFixed(3) ?? '—'}</td>
-                      <td>{m.max_drawdown_pct?.toFixed(2) ?? '—'}</td>
-                      <td className="muted">{p.score_mean?.toFixed(2) ?? '—'}</td>
-                      <td className="muted">{p.score_std?.toFixed(2) ?? '—'}</td>
                       <td>
                         <ContextualTooltip text={canRunIndividual
                           ? 'Re-roda este pass no MT5 e abre na aba Análise Individual'
@@ -402,6 +405,21 @@ export function TriagePage({ onOpenRun, preloadedData, onClearPreload }) {
                           </button>
                         </ContextualTooltip>
                       </td>
+                      <td>{i + 1}</td>
+                      <td style={{ fontWeight: 700, color: rsColor }}>{rsPct.toFixed(1)}%</td>
+                      <td style={{ color: stabColor }}>{stab.toFixed(1)}%</td>
+                      <td>{p.neighbor_count}</td>
+                      <td style={{ fontWeight: 700, color: auraColor }}>{isNaN(aura) ? '—' : aura.toFixed(3)}</td>
+                      <td>{m.sortino_ratio?.toFixed(3) ?? '—'}</td>
+                      <td>{m.calmar_ratio?.toFixed(3) ?? '—'}</td>
+                      <td>{m.net_profit?.toFixed(2) ?? '—'}</td>
+                      <td>{m.profit_factor?.toFixed(3) ?? '—'}</td>
+                      <td>{m.max_drawdown_pct?.toFixed(2) ?? '—'}</td>
+                      <td className="muted">{p.score_mean?.toFixed(2) ?? '—'}</td>
+                      <td className="muted">{p.score_std?.toFixed(2) ?? '—'}</td>
+                      {varyingParamKeys.map(k => (
+                        <td key={k} className="small">{String(p.parameters?.[k] ?? '—')}</td>
+                      ))}
                     </tr>
                   )
                 })}

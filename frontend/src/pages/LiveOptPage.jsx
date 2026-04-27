@@ -238,10 +238,19 @@ export function LiveOptPage({ onOpenRun, onNavigateToTriage }) {
     return arr
   }, [passes, sortKey])
 
+  // Só inclui parâmetros que estão sendo otimizados (valor varia entre passes).
+  // Parâmetros fixos são ignorados — eles poluem a tabela e não ajudam na análise.
   const paramKeys = useMemo(() => {
-    const s = new Set()
-    for (const p of passes) Object.keys(p.parameters || {}).forEach(k => s.add(k))
-    return Array.from(s)
+    const valuesByKey = new Map()
+    for (const p of passes) {
+      for (const [k, v] of Object.entries(p.parameters || {})) {
+        if (!valuesByKey.has(k)) valuesByKey.set(k, new Set())
+        valuesByKey.get(k).add(String(v))
+      }
+    }
+    return Array.from(valuesByKey.entries())
+      .filter(([, vs]) => vs.size > 1)
+      .map(([k]) => k)
   }, [passes])
 
   const openTop = async () => {
@@ -508,11 +517,11 @@ export function LiveOptPage({ onOpenRun, onNavigateToTriage }) {
               <thead>
                 <tr>
                   <th>#</th><th>pass_id</th><th>Trades</th>
-                  {paramKeys.map(k => <th key={k}>{k}</th>)}
                   <th style={{ color: '#D4AF5F' }}>★ Aura</th>
                   <th>Sortino</th><th>Sharpe</th><th>Calmar</th>
                   <th>Net Profit</th><th>PF</th><th>DD %</th><th>SQN</th>
                   <th>MT5 Crit.</th>
+                  {paramKeys.map(k => <th key={k}>{k}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -525,7 +534,6 @@ export function LiveOptPage({ onOpenRun, onNavigateToTriage }) {
                       <td>{i + 1}</td>
                       <td className="small"><code>{(p.pass_id || '').slice(0, 12)}…</code></td>
                       <td>{p.num_trades}</td>
-                      {paramKeys.map(k => <td key={k}>{String(p.parameters?.[k] ?? '—')}</td>)}
                       <td style={{ fontWeight: 600, color: auraColor }}>{fmt(aura)}</td>
                       <td>{fmt(m.sortino_ratio)}</td>
                       <td>{fmt(m.sharpe_ratio)}</td>
@@ -535,6 +543,7 @@ export function LiveOptPage({ onOpenRun, onNavigateToTriage }) {
                       <td>{fmt(m.max_drawdown_pct, 2)}</td>
                       <td>{fmt(m.sqn)}</td>
                       <td>{fmt(m.complex_criterion)}</td>
+                      {paramKeys.map(k => <td key={k}>{String(p.parameters?.[k] ?? '—')}</td>)}
                     </tr>
                   )
                 })}
