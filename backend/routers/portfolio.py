@@ -65,12 +65,24 @@ def _resample_daily(curve: list[tuple[datetime, float]]) -> dict[str, float]:
     return out
 
 
-def _correlation_matrix(curves: dict[str, dict[str, float]]) -> dict[str, Any]:
-    """Correlação entre retornos diários das curvas."""
+def _correlation_matrix(
+    curves: dict[str, dict[str, float]],
+    run_labels: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Correlação entre retornos diários das curvas + métricas de diversificação."""
     ids = list(curves.keys())
     all_dates = sorted({d for c in curves.values() for d in c})
-    if len(all_dates) < 2:
-        return {"run_ids": ids, "matrix": [[1.0] * len(ids)] * len(ids)}
+    n = len(ids)
+    if len(all_dates) < 2 or n < 2:
+        return {
+            "run_ids": ids,
+            "matrix": [[1.0] * n for _ in range(n)],
+            "labels": [run_labels.get(i, i) for i in ids] if run_labels else ids,
+            "avg_correlation": 0.0,
+            "min_correlation": 0.0,
+            "max_correlation": 0.0,
+            "diversification_ratio": 1.0,
+        }
 
     # Forward-fill por curva e calcula retornos diários
     series: dict[str, np.ndarray] = {}
@@ -86,19 +98,52 @@ def _correlation_matrix(curves: dict[str, dict[str, float]]) -> dict[str, Any]:
         series[rid] = rets
 
     mat = []
-    for a in ids:
+    off_diag: list[float] = []
+    for i, a in enumerate(ids):
         row = []
-        for b in ids:
+        for j, b in enumerate(ids):
             if a == b:
                 row.append(1.0)
             else:
                 sa, sb = series[a], series[b]
                 if sa.std() == 0 or sb.std() == 0:
-                    row.append(0.0)
+                    v = 0.0
                 else:
-                    row.append(float(np.corrcoef(sa, sb)[0, 1]))
+                    v = float(np.corrcoef(sa, sb)[0, 1])
+                row.append(v)
+                if i < j:
+                    off_diag.append(v)
         mat.append(row)
-    return {"run_ids": ids, "matrix": mat}
+
+    avg_corr = float(np.mean(off_diag)) if off_diag else 0.0
+    min_corr = float(np.min(off_diag)) if off_diag else 0.0
+    max_corr = float(np.max(off_diag)) if off_diag else 0.0
+    div_ratio = 1.0 - float(np.mean(np.abs(off_diag))) if off_diag else 1.0
+
+    # Par mais correlacionado
+    max_pair: tuple[str, str] | None = None
+    max_pair_val = -2.0
+    for i in range(n):
+        for j in range(i + 1, n):
+            if mat[i][j] > max_pair_val:
+                max_pair_val = mat[i][j]
+                labels = run_labels or {}
+                max_pair = (
+                    labels.get(ids[i], ids[i]),
+                    labels.get(ids[j], ids[j]),
+                )
+
+    return {
+        "run_ids": ids,
+        "matrix": mat,
+        "labels": [run_labels.get(i, i) for i in ids] if run_labels else ids,
+        "avg_correlation": round(avg_corr, 4),
+        "min_correlation": round(min_corr, 4),
+        "max_correlation": round(max_corr, 4),
+        "diversification_ratio": round(div_ratio, 4),
+        "most_correlated_pair": list(max_pair) if max_pair else None,
+        "most_correlated_value": round(max_pair_val, 4) if max_pair else None,
+    }
 
 
 @router.post("/aggregate")
@@ -108,6 +153,7 @@ def aggregate_portfolio(req: PortfolioRequest) -> dict[str, Any]:
     per_run_curves: dict[str, dict[str, float]] = {}
     per_run_info: list[dict[str, Any]] = []
 
+    run_labels: dict[str, str] = {}
     for rid in req.run_ids:
         trades = storage.load_trades(rid)
         if not trades:
@@ -116,6 +162,12 @@ def aggregate_portfolio(req: PortfolioRequest) -> dict[str, Any]:
         curve = _equity_curve_by_trade(trades, req.initial_equity)
         per_run_curves[rid] = _resample_daily(curve)
         run = storage.get_run(rid)
+        label = (run.get("label") or "").strip() if run else ""
+        if not label:
+            sym = (run.get("symbol") or "") if run else ""
+            tf = (run.get("timeframe") or "") if run else ""
+            label = f"{sym} {tf}".strip() or rid
+        run_labels[rid] = label
         per_run_info.append({
             "run_id": rid,
             "symbol": run.get("symbol") if run else None,
@@ -131,7 +183,7 @@ def aggregate_portfolio(req: PortfolioRequest) -> dict[str, Any]:
         all_trades, initial=req.initial_equity,
         runs=req.runs, n_trials=req.n_trials, var_sr_trials=req.var_sr_trials,
     )
-    corr = _correlation_matrix(per_run_curves)
+    corr = _correlation_matrix(per_run_curves, run_labels=run_labels)
 
     return {
         "run_count": len(req.run_ids),

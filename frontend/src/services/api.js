@@ -242,6 +242,10 @@ export const wfaAutoJob = (jobId) =>
 export const wfaAutoJobs = () =>
   api.get('/analysis/wfa-auto/jobs').then(r => r.data)
 
+// PBO via CSCV
+export const runPBO = (runIds) =>
+  api.post('/analysis/pbo', { run_ids: runIds }).then(r => r.data)
+
 /** Abre um WebSocket para o stream de passes. Retorna o WebSocket já conectado. */
 export const openLiveOptStream = () => {
   const wsUrl = baseURL.replace(/^http/, 'ws') + '/live-optimization/ws'

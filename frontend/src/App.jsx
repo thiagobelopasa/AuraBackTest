@@ -7,6 +7,7 @@ import { HistoryPage } from './pages/HistoryPage'
 import { TriagePage } from './pages/TriagePage'
 import { LiveOptPage } from './pages/LiveOptPage'
 import { PortfolioPage } from './pages/PortfolioPage'
+import { WFAPage } from './pages/WFAPage'
 import { TrialBanner } from './components/TrialBanner'
 import { BackendStatus } from './components/BackendStatus'
 import { UpdateBanner } from './components/UpdateBanner'
@@ -22,6 +23,7 @@ const TABS = [
   { id: 'backtest', label: 'Backtest Aura' },
   { id: 'analysis', label: 'Backtest Individual' },
   { id: 'portfolio', label: 'Portfólio' },
+  { id: 'wfa', label: 'Walk-Forward' },
   { id: 'history', label: 'Histórico' },
 ]
 
@@ -87,6 +89,7 @@ function App() {
         {tab === 'liveopt' && <LiveOptPage onOpenRun={openRun} onNavigateToTriage={navigateToTriage} />}
         {tab === 'triage' && <TriagePage onOpenRun={openRun} preloadedData={triagePreloadedData} onClearPreload={() => setTriagePreloadedData(null)} />}
         {tab === 'portfolio' && <PortfolioPage />}
+        {tab === 'wfa' && <WFAPage onOpenRun={openRun} />}
         {tab === 'history' && <HistoryPage onOpenRun={openRun} />}
       </div>
 

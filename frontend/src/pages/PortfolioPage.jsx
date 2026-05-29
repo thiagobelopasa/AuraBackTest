@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { api, listRuns, errorMessage } from '../services/api'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { api, listRuns, errorMessage, runPBO } from '../services/api'
 import { runLabelShort, runFingerprint } from '../services/runLabel'
+import { CorrelationHeatmap } from '../components/CorrelationHeatmap'
 
 export function PortfolioPage() {
   const [runs, setRuns] = useState([])
@@ -11,6 +13,9 @@ export function PortfolioPage() {
   const [maxDD, setMaxDD] = useState(20)
   const [optResult, setOptResult] = useState(null)
   const [optLoading, setOptLoading] = useState(false)
+  const [pboResult, setPboResult] = useState(null)
+  const [pboLoading, setPboLoading] = useState(false)
+  const [pboError, setPboError] = useState('')
 
   useEffect(() => {
     listRuns({ limit: 200 }).then(setRuns).catch(() => {})
@@ -24,11 +29,13 @@ export function PortfolioPage() {
 
   const toggle = (id) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+    setResult(null)
+    setPboResult(null)
   }
 
   const aggregate = async () => {
     if (!selected.length) { setError('Selecione pelo menos 1 run'); return }
-    setError(''); setLoading(true); setResult(null)
+    setError(''); setLoading(true); setResult(null); setPboResult(null)
     try {
       const r = await api.post('/portfolio/aggregate', {
         run_ids: selected,
@@ -56,8 +63,53 @@ export function PortfolioPage() {
     } finally { setOptLoading(false) }
   }
 
+  const calcPBO = async () => {
+    if (selected.length < 2) { setPboError('PBO requer 2+ runs selecionados'); return }
+    setPboError(''); setPboLoading(true); setPboResult(null)
+    try {
+      const r = await runPBO(selected)
+      setPboResult(r)
+    } catch (e) {
+      setPboError(errorMessage(e))
+    } finally { setPboLoading(false) }
+  }
+
   const corr = result?.correlation
   const suite = result?.suite
+
+  const pboColor = (v) => {
+    if (v === undefined || v === null) return '#8b949e'
+    if (v < 0.25) return '#3fb950'
+    if (v < 0.5) return '#d29922'
+    return '#f85149'
+  }
+
+  const corrColor = (v) => {
+    if (v === undefined || v === null) return '#8b949e'
+    if (v < 0.3) return '#3fb950'
+    if (v < 0.6) return '#d29922'
+    return '#f85149'
+  }
+
+  // Histograma de logits para o PBO
+  const logitHistData = useMemo(() => {
+    if (!pboResult?.logits?.length) return []
+    const bins = 20
+    const vals = pboResult.logits
+    const min = Math.min(...vals)
+    const max = Math.max(...vals)
+    const range = max - min || 1
+    const counts = Array(bins).fill(0)
+    vals.forEach(v => {
+      const idx = Math.min(bins - 1, Math.floor(((v - min) / range) * bins))
+      counts[idx]++
+    })
+    return counts.map((count, i) => ({
+      x: (min + (i / bins) * range).toFixed(1),
+      count,
+      fill: (min + (i / bins) * range) < 0 ? '#3fb950' : '#f85149',
+    }))
+  }, [pboResult])
 
   return (
     <div>
@@ -93,13 +145,98 @@ export function PortfolioPage() {
             </tbody>
           </table>
         </div>
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button disabled={!selected.length || loading} onClick={aggregate}>
             {loading ? 'Agregando...' : `Analisar portfólio (${selected.length})`}
           </button>
+          {selected.length >= 2 && (
+            <button
+              disabled={pboLoading}
+              onClick={calcPBO}
+              style={{ background: 'transparent', border: '1px solid #30363d', color: '#e6edf3' }}
+            >
+              {pboLoading ? 'Calculando PBO...' : 'Calcular PBO (CSCV)'}
+            </button>
+          )}
         </div>
         {error && <div className="errbox" style={{ marginTop: 10 }}>{error}</div>}
       </div>
+
+      {/* PBO */}
+      {(pboResult || pboError) && (
+        <div className="card">
+          <h2>PBO — Probability of Backtest Overfitting (CSCV)</h2>
+          {pboError && <div className="errbox">{pboError}</div>}
+          {pboResult && (
+            <>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 12,
+                padding: '10px 18px', borderRadius: 10, marginBottom: 16,
+                background: 'rgba(0,0,0,0.2)',
+                border: `1px solid ${pboColor(pboResult.pbo)}`,
+              }}>
+                <span style={{ fontSize: 28, fontWeight: 700, color: pboColor(pboResult.pbo) }}>
+                  {(pboResult.pbo * 100).toFixed(1)}%
+                </span>
+                <span style={{ fontSize: 13, color: '#8b949e', maxWidth: 280 }}>
+                  {pboResult.interpretation}
+                </span>
+              </div>
+
+              <div className="grid cols-3" style={{ marginBottom: 16 }}>
+                <div className="kpi">
+                  <div className="label">Combinações CSCV</div>
+                  <div className="value">{pboResult.n_combinations.toLocaleString()}</div>
+                  <div className="small muted">C(16,8) partições</div>
+                </div>
+                <div className="kpi">
+                  <div className="label">OOS rank médio</div>
+                  <div className="value" style={{ color: pboResult.mean_oos_rank > 0.5 ? '#3fb950' : '#f85149' }}>
+                    {(pboResult.mean_oos_rank * 100).toFixed(1)}%
+                  </div>
+                  <div className="small muted">{'>'} 50% = bom</div>
+                </div>
+                <div className="kpi">
+                  <div className="label">Performance degradation</div>
+                  <div className="value" style={{ color: pboResult.performance_degradation > 0 ? '#3fb950' : '#f85149' }}>
+                    {pboResult.performance_degradation.toFixed(3)}
+                  </div>
+                  <div className="small muted">slope IS→OOS (≥0 = bom)</div>
+                </div>
+              </div>
+
+              {logitHistData.length > 0 && (
+                <>
+                  <p className="muted small" style={{ marginBottom: 6 }}>
+                    Distribuição de logits: valores negativos (verde) = vencedor IS mantém rank em OOS. Positivos (vermelho) = overfit.
+                  </p>
+                  <ResponsiveContainer width="100%" height={130}>
+                    <BarChart data={logitHistData} barCategoryGap={2}>
+                      <XAxis dataKey="x" tick={{ fontSize: 10, fill: '#8b949e' }} />
+                      <YAxis hide />
+                      <Tooltip formatter={(v) => [v, 'combinações']} labelFormatter={l => `logit ≈ ${l}`} />
+                      <ReferenceLine x="0.0" stroke="#8b949e" strokeDasharray="3 3" />
+                      <Bar dataKey="count" fill="#3fb950" isAnimationActive={false}
+                        shape={(props) => {
+                          const { x, y, width, height, index } = props
+                          const fill = logitHistData[index]?.fill || '#3fb950'
+                          return <rect x={x} y={y} width={width} height={height} fill={fill} rx={2} />
+                        }}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </>
+              )}
+
+              {pboResult.missing_runs?.length > 0 && (
+                <p className="small muted" style={{ marginTop: 8 }}>
+                  Runs ignorados (sem análise salva): {pboResult.missing_runs.join(', ')}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {selected.length >= 2 && (
         <div className="card">
@@ -152,9 +289,7 @@ export function PortfolioPage() {
                 </div>
               </div>
 
-              <h3 style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
-                Pesos ótimos
-              </h3>
+              <h3 style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>Pesos ótimos</h3>
               <table>
                 <thead><tr>
                   <th>Robô</th><th>Fingerprint</th><th>Peso</th><th>Distribuição</th>
@@ -231,48 +366,67 @@ export function PortfolioPage() {
 
           {corr && corr.run_ids.length > 1 && (
             <div className="card">
-              <h2>Matriz de correlação (retornos diários)</h2>
+              <h2>Diversificação — correlação entre curvas de equity</h2>
               <p className="muted small">
-                Correlação baixa entre runs = diversificação real. Correlação alta
-                (&gt; 0.7) = runs fazem essencialmente a mesma coisa.
+                Correlação baixa = diversificação real. Correlação alta (&gt; 0.7) = robôs fazem essencialmente a mesma coisa.
               </p>
-              <table>
-                <thead>
-                  <tr>
-                    <th></th>
-                    {corr.run_ids.map(id => <th key={id} style={{ fontSize: 10 }}><code>{id}</code></th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {corr.matrix.map((row, i) => (
-                    <tr key={corr.run_ids[i]}>
-                      <td style={{ fontSize: 10 }}><code>{corr.run_ids[i]}</code></td>
-                      {row.map((v, j) => {
-                        const absv = Math.abs(v)
-                        const bg = v >= 0
-                          ? `rgba(63, 185, 80, ${absv * 0.6})`
-                          : `rgba(248, 81, 73, ${absv * 0.6})`
-                        return <td key={j} style={{ background: bg, textAlign: 'center' }}>{v.toFixed(2)}</td>
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+              <div className="grid cols-3" style={{ marginBottom: 16 }}>
+                <div className="kpi">
+                  <div className="label">Correlação média</div>
+                  <div className="value" style={{ color: corrColor(corr.avg_correlation) }}>
+                    {corr.avg_correlation?.toFixed(3) ?? '—'}
+                  </div>
+                  <div className="small muted">{'<'} 0.3 = bem diversificado</div>
+                </div>
+                <div className="kpi">
+                  <div className="label">Índice de diversificação</div>
+                  <div className="value" style={{ color: corrColor(1 - (corr.diversification_ratio ?? 0)) }}>
+                    {((corr.diversification_ratio ?? 0) * 100).toFixed(1)}%
+                  </div>
+                  <div className="small muted">100% = totalmente descorrelacionado</div>
+                </div>
+                <div className="kpi">
+                  <div className="label">Par mais correlacionado</div>
+                  <div className="value small" style={{ color: corrColor(corr.max_correlation), fontSize: 14 }}>
+                    {corr.max_correlation?.toFixed(3) ?? '—'}
+                  </div>
+                  <div className="small muted">
+                    {corr.most_correlated_pair?.join(' × ') ?? '—'}
+                  </div>
+                </div>
+              </div>
+
+              {corr.most_correlated_pair && corr.max_correlation > 0.6 && (
+                <div style={{
+                  padding: '8px 14px', marginBottom: 14, borderRadius: 6,
+                  background: 'rgba(210,153,34,0.1)', border: '1px solid rgba(210,153,34,0.3)',
+                  color: '#d29922', fontSize: 13,
+                }}>
+                  ⚠️ <b>{corr.most_correlated_pair[0]}</b> e <b>{corr.most_correlated_pair[1]}</b> têm
+                  correlação de <b>{corr.max_correlation.toFixed(2)}</b> — considere reduzir o peso de um deles.
+                </div>
+              )}
+
+              <CorrelationHeatmap
+                matrix={corr.matrix}
+                labels={corr.labels || corr.run_ids}
+                runIds={corr.run_ids}
+              />
             </div>
           )}
 
           {suite && (
             <div className="card">
               <h2>Scorecard de robustez (portfólio agregado)</h2>
-              <div className={`scorecard-banner ${suite.overall}`}
-                style={{
-                  padding: 12, borderRadius: 8, marginBottom: 14,
-                  background: suite.overall === 'green' ? 'rgba(56,139,56,0.15)'
-                    : suite.overall === 'yellow' ? 'rgba(210,153,34,0.15)'
-                    : 'rgba(210,54,54,0.15)',
-                  border: '1px solid ' + (suite.overall === 'green' ? '#388b38'
-                    : suite.overall === 'yellow' ? '#d29922' : '#d23636'),
-                }}>
+              <div style={{
+                padding: 12, borderRadius: 8, marginBottom: 14,
+                background: suite.overall === 'green' ? 'rgba(56,139,56,0.15)'
+                  : suite.overall === 'yellow' ? 'rgba(210,153,34,0.15)'
+                  : 'rgba(210,54,54,0.15)',
+                border: '1px solid ' + (suite.overall === 'green' ? '#388b38'
+                  : suite.overall === 'yellow' ? '#d29922' : '#d23636'),
+              }}>
                 <b style={{ fontSize: 16 }}>
                   {suite.overall === 'green' ? '🟢 ROBUSTO' : suite.overall === 'yellow' ? '🟡 ATENÇÃO' : '🔴 FRÁGIL'}
                   &nbsp;— {suite.passes}/{suite.total} checks

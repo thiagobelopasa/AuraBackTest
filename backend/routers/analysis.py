@@ -394,6 +394,65 @@ def wfa_auto_jobs() -> list[dict[str, Any]]:
     return [walk_forward_auto.job_as_dict(j) for j in walk_forward_auto.list_jobs()]
 
 
+# ----------------------------------------------------------------- PBO via CSCV
+class PBORequest(BaseModel):
+    run_ids: list[str] = Field(min_length=2, max_length=50)
+
+
+@router.post("/pbo")
+def run_pbo(req: PBORequest) -> dict[str, Any]:
+    """Calcula PBO (Probability of Backtest Overfitting) via CSCV.
+
+    Requer 2–50 runs com análise salva. Usa as equity curves de cada run
+    para montar a matriz de retornos e roda compute_pbo(subsets=16).
+    """
+    from services import pbo as pbo_svc
+
+    storage.init_db()
+    curves: list[list[float]] = []
+    labels: list[str] = []
+    missing: list[str] = []
+
+    for rid in req.run_ids:
+        analysis = storage.load_analysis(rid)
+        if not analysis:
+            missing.append(rid)
+            continue
+        eq = analysis.get("equity_curve")
+        if not eq or len(eq) < 4:
+            missing.append(rid)
+            continue
+        run = storage.get_run(rid)
+        label = (run.get("label") or "").strip() if run else ""
+        if not label:
+            sym = (run.get("symbol") or rid) if run else rid
+            tf = (run.get("timeframe") or "") if run else ""
+            label = f"{sym} {tf}".strip()
+        curves.append(eq)
+        labels.append(label)
+
+    if len(curves) < 2:
+        raise HTTPException(
+            400,
+            f"Não foi possível carregar equity curves de ≥2 runs. "
+            f"Sem dados: {missing}. "
+            "Certifique-se de que os runs têm análise salva.",
+        )
+
+    try:
+        matrix = pbo_svc.equity_curves_to_returns_matrix(curves)
+        result = pbo_svc.compute_pbo(matrix, subsets=16)
+    except (ValueError, RuntimeError) as e:
+        raise HTTPException(400, str(e)) from e
+
+    return {
+        **pbo_svc.as_dict(result),
+        "labels": labels,
+        "n_runs": len(curves),
+        "missing_runs": missing,
+    }
+
+
 @router.post("/forward-compare")
 def forward_compare(req: ForwardCompareRequest) -> dict[str, Any]:
     """Baixa trades reais do MT5 e compara com o backtest `run_id`."""
