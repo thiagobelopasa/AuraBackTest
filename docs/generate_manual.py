@@ -234,9 +234,10 @@ def build_content():
     story.append(p("Manual Completo do Usuário", COVER_SUB))
     story.append(Spacer(1, 5 * cm))
     cover_kv = kv_table([
-        ("Versão", "0.5.6 ou superior"),
+        ("Versão", "0.6.0 ou superior"),
         ("Plataforma", "Windows 10 / 11 (64-bit)"),
-        ("Pré-requisito", "MetaTrader 5 instalado"),
+        ("Pré-requisitos", "MetaTrader 5 (uso completo) — opcional para Import de CSV"),
+        ("Plataformas suportadas", "MetaTrader 5, ProfitChart Pro, TradeLocker"),
         ("Licença", "Vitalícia (sem mensalidade)"),
         ("Suporte", "thiago.belo.pasa@gmail.com"),
     ], col_widths=(5 * cm, 9 * cm))
@@ -258,20 +259,21 @@ def build_content():
         ("3.", "Conceitos fundamentais"),
         ("4.", "Tour pela interface"),
         ("5.", "Aba Começar (Home)"),
-        ("6.", "Backtest Aura — importar relatório do MT5"),
-        ("7.", "Backtest Individual — análise completa"),
-        ("8.", "Otimização ao vivo"),
-        ("9.", "Análise de Otimização (Triagem)"),
-        ("10.", "Portfólio — combinar robôs"),
-        ("11.", "Walk-Forward Analysis"),
-        ("12.", "Histórico"),
-        ("13.", "Tooltips (?) e ajuda contextual"),
-        ("14.", "Glossário completo de métricas"),
-        ("15.", "Interpretando o scorecard de robustez"),
-        ("16.", "Workflows recomendados"),
-        ("17.", "Solução de problemas (FAQ)"),
-        ("18.", "Atualizações automáticas"),
-        ("19.", "Suporte e contato"),
+        ("6.", "Importar CSV — ProfitChart Pro e TradeLocker"),
+        ("7.", "Backtest Aura — importar relatório do MT5"),
+        ("8.", "Backtest Individual — análise completa"),
+        ("9.", "Otimização ao vivo"),
+        ("10.", "Análise de Otimização (Triagem)"),
+        ("11.", "Portfólio — combinar robôs"),
+        ("12.", "Walk-Forward Analysis"),
+        ("13.", "Histórico"),
+        ("14.", "Tooltips (?) e ajuda contextual"),
+        ("15.", "Glossário completo de métricas"),
+        ("16.", "Interpretando o scorecard de robustez"),
+        ("17.", "Workflows recomendados"),
+        ("18.", "Solução de problemas (FAQ)"),
+        ("19.", "Atualizações automáticas"),
+        ("20.", "Suporte e contato"),
     ]
     for num, title in toc_items:
         story.append(p(f"<b>{num}</b> &nbsp;&nbsp; {title}", TOC_ITEM))
@@ -280,10 +282,11 @@ def build_content():
     # ===== CAPÍTULO 1 =====
     story.append(section_header("1", "Bem-vindo ao AuraBackTest"))
     story.append(p(
-        "O AuraBackTest é um motor de análise quantitativa para traders sistemáticos "
-        "que operam no MetaTrader 5. Ele transforma relatórios de backtest e otimização "
-        "em <b>diagnósticos estatísticos rigorosos</b>, no estilo dos fundos quantitativos "
-        "como Renaissance Technologies.",
+        "O AuraBackTest é um motor de análise quantitativa para traders sistemáticos. "
+        "A partir da v0.6.0 ele aceita relatórios de <b>três plataformas</b>: "
+        "MetaTrader 5 (HTM), ProfitChart Pro (CSV) e TradeLocker (CSV). "
+        "Transforma esses relatórios em <b>diagnósticos estatísticos rigorosos</b>, "
+        "no estilo dos fundos quantitativos como Renaissance Technologies.",
     ))
     story.append(p("Para quem é este produto", H2))
     story.append(p(
@@ -308,9 +311,9 @@ def build_content():
     ])
     story.append(p("Como usar este manual", H2))
     story.append(p(
-        "Se você está começando agora, leia os capítulos 1 a 4 em ordem e depois pule para o capítulo 16 (Workflows recomendados). "
-        "Quando precisar entender uma métrica específica, consulte o capítulo 14 (Glossário). "
-        "Em caso de problemas, vá direto ao capítulo 17 (FAQ)."
+        "Se você está começando agora, leia os capítulos 1 a 4 em ordem e depois pule para o capítulo 17 (Workflows recomendados). "
+        "Quando precisar entender uma métrica específica, consulte o capítulo 15 (Glossário). "
+        "Em caso de problemas, vá direto ao capítulo 18 (FAQ)."
     ))
     story.append(tip(
         "Este manual também serve como referência rápida. Todos os termos importantes "
@@ -326,7 +329,9 @@ def build_content():
         ("Sistema operacional", "Windows 10 ou 11, 64-bit"),
         ("Memória RAM", "Mínimo 4 GB. Recomendado 8 GB+ se for usar Monte Carlo com ticks (arquivos GB)."),
         ("Disco", "Mínimo 500 MB para o app + ~2 GB para dados de tick por símbolo testado."),
-        ("MetaTrader 5", "Build 3815 ou superior. Pode ter múltiplas instâncias instaladas."),
+        ("MetaTrader 5", "Build 3815+ se for usar otimização ao vivo / WFA automático. Opcional se você só importa CSVs."),
+        ("ProfitChart Pro", "Qualquer versão recente que tenha botão 'Exportar Lista de Ordens CSV'. Opcional."),
+        ("TradeLocker", "Web ou desktop, com acesso ao 'Export account History'. Opcional."),
         ("Conexão internet", "Necessária para checar atualizações automáticas e (se usar) baixar ticks via API."),
     ]))
     story.append(p(
@@ -479,13 +484,14 @@ def build_content():
     story.append(p("Abas principais", H2))
     story.append(kv_table([
         ("Começar", "Tela inicial com guia de fluxo e botão de diagnóstico do MT5."),
+        ("Importar CSV", "Importa CSV exportado do ProfitChart Pro ou TradeLocker. (NOVO em v0.6.0)"),
         ("Otimização ao vivo", "Coleta passes em tempo real enquanto o MT5 otimiza um EA."),
         ("Análise de Otimização", "Triagem: análise de robustez de vizinhança dos passes."),
         ("Backtest Aura", "Importa relatório HTM do MT5 para análise no app."),
         ("Backtest Individual", "Visão detalhada de um único backtest: KPIs, equity, robustez."),
         ("Portfólio", "Combinar múltiplos robôs e analisar correlação + PBO."),
         ("Walk-Forward", "Walk-Forward Analysis automático ponta-a-ponta."),
-        ("Histórico", "Lista de todos os runs salvos no app."),
+        ("Histórico", "Lista de todos os runs salvos no app (com badge da plataforma)."),
     ]))
     story.append(p("Navegação entre abas", H2))
     story.append(p(
@@ -530,8 +536,175 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 6 =====
-    story.append(section_header("6", "Backtest Aura — importar relatório do MT5"))
+    # ===== CAPÍTULO 6 (NOVO em v0.6.0) =====
+    story.append(section_header("6", "Importar CSV — ProfitChart Pro e TradeLocker"))
+    story.append(p("Quando usar esta aba", H2))
+    story.append(p(
+        "Você usa estratégias fora do MetaTrader 5 e quer analisá-las no AuraBackTest. "
+        "A v0.6.0 adicionou suporte para CSVs exportados de duas plataformas:"
+    ))
+    story += bullet_list([
+        "<b>ProfitChart Pro (Nelogica)</b>: mercado brasileiro, B3 (WIN, IND, WDO, ações).",
+        "<b>TradeLocker</b>: forex e CFDs, padrão internacional.",
+    ])
+    story.append(p(
+        "Para arquivos HTM do MT5 continua valendo a aba <b>Backtest Aura</b> (capítulo 7) — "
+        "ela tem parser dedicado com extração de parâmetros do EA."
+    ))
+
+    story.append(p("Limitações técnicas conhecidas", H2))
+    story.append(p(
+        "Nem ProfitChart Pro nem TradeLocker têm CLI ou API pública para rodar backtests programaticamente. "
+        "Por isso o AuraBackTest <b>não consegue</b>:"
+    ))
+    story += bullet_list([
+        "Disparar backtests dessas plataformas (você roda na plataforma e exporta o CSV).",
+        "Conectar via API para puxar trades em tempo real (não armazenamos credenciais).",
+        "Auto-instrumentar EAs como faz com MT5 (NTSL e bots TradeLocker são fechados).",
+    ])
+    story.append(p(
+        "O que <b>conseguimos</b> fazer é importar o CSV exportado e aplicar TODAS as análises do app "
+        "(KPIs, robustez, Monte Carlo, PBO, Walk-Forward, portfólio) sobre os trades importados."
+    ))
+
+    story.append(p("Passo a passo — ProfitChart Pro", H2))
+    story.append(p("<b>No ProfitChart Pro</b>:", H3))
+    story += numbered_list([
+        "Abra o gráfico do ativo desejado.",
+        "Ferramentas → Editor de Estratégias.",
+        "Carregue ou escreva sua estratégia em NTSL.",
+        "Clique em <b>Backtest</b> e configure o período de análise.",
+        "Após rodar, abra a aba <b>Operações</b> no painel de resultados.",
+        "No menu inferior, clique em <b>Exportar Lista de Ordens CSV</b>.",
+        "Salve o arquivo .csv em qualquer pasta.",
+    ])
+    story.append(p("<b>No AuraBackTest</b>:", H3))
+    story += numbered_list([
+        "Vá para a aba <b>Importar CSV</b>.",
+        "Leia as instruções no card superior (tabs com cada plataforma).",
+        "No card inferior, clique em <b>Selecionar arquivo</b> e escolha o CSV.",
+        "Plataforma: deixe em <b>Detectar automaticamente</b> ou selecione manualmente.",
+        "Preencha campos opcionais (símbolo, timeframe, label, depósito inicial).",
+        "Clique em <b>Analisar (preview)</b> — backend parseia mas <b>NÃO salva</b> ainda.",
+        "Veja o card de Preview que aparece embaixo.",
+        "Se a validação está OK e o mapeamento de colunas confere, clique em <b>Confirmar e salvar</b>.",
+        "Pronto — o app abre o run automaticamente no Backtest Individual.",
+    ])
+
+    story.append(p("Passo a passo — TradeLocker", H2))
+    story.append(p("<b>No TradeLocker</b>:", H3))
+    story += numbered_list([
+        "Faça login no TradeLocker (web ou desktop).",
+        "Menu lateral → <b>Accounts</b> → clique em <b>View account</b>.",
+        "Role até a seção <b>Trade History</b>.",
+        "Selecione o período (datas) que quer exportar.",
+        "Clique no ícone ⋮ (3 pontos verticais) ao lado do número da conta, acima da tabela.",
+        "Selecione <b>Export account History</b>.",
+        "Aguarde o download do .csv.",
+    ])
+    story.append(p("<b>No AuraBackTest</b>:", H3))
+    story.append(p(
+        "Mesmo fluxo do ProfitChart: clique em <b>Selecionar arquivo</b>, defina plataforma como "
+        "<b>TradeLocker</b> (ou auto-detectar), preencha o resto e use Analisar → Confirmar."
+    ))
+
+    story.append(p("Tela de preview — o que cada item significa", H2))
+    story.append(p(
+        "Antes de salvar, o app mostra um card de Preview com:"
+    ))
+    story += bullet_list([
+        "<b>Status OK/PROBLEMA</b>: badge no topo. Se PROBLEMA, veja os erros e ajuste o CSV.",
+        "<b>Plataforma detectada</b>: confirma se o auto-detect acertou. Se errou, refaça com plataforma explícita.",
+        "<b>4 KPIs</b>: trades parseados, linhas no arquivo, encoding usado, separador detectado.",
+        "<b>Lista de erros</b> (vermelho): trades que não puderam ser parseados. Cada erro indica a linha e o motivo.",
+        "<b>Avisos</b> (amarelo): coisas que merecem atenção mas não impedem salvar (ex: trades fora de ordem).",
+        "<b>Mapeamento de colunas</b>: tabela mostrando qual coluna do seu CSV corresponde a cada campo canônico (time_in, side, profit, etc).",
+        "<b>Primeiros 50 trades</b>: amostra para você ver se os valores estão parseados corretamente.",
+        "<b>Linhas ignoradas</b> (expandível): linhas que o parser pulou e por quê (linhas vazias, sem profit, linhas de sumário).",
+    ])
+
+    story.append(p("Parser defensivo — como funciona", H2))
+    story.append(p(
+        "Como cada broker pode customizar levemente o formato do CSV, o parser é projetado para "
+        "ser flexível:"
+    ))
+    story += bullet_list([
+        "<b>Detecção de encoding</b>: tenta UTF-8, UTF-16, CP1252 automaticamente.",
+        "<b>Detecção de separador</b>: testa <code>;</code>, <code>,</code>, tab, <code>|</code>.",
+        "<b>Decimais PT-BR e EN</b>: aceita tanto <code>1.234,56</code> quanto <code>1,234.56</code>.",
+        "<b>Datas em múltiplos formatos</b>: 17 padrões cobertos (ISO, BR, US, MT5 com pontos).",
+        "<b>Múltiplos sinônimos por coluna</b>: <i>&quot;Data Entrada&quot;</i> = <i>&quot;Open Time&quot;</i> = <i>&quot;Data Abertura&quot;</i> = ...",
+        "<b>Header em qualquer linha</b>: localiza automaticamente a linha do header (a primeira com 5+ palavras-chave reconhecidas).",
+        "<b>Skip de linhas de sumário</b>: linhas sem profit numérico ou sem data são ignoradas com motivo.",
+    ])
+    story.append(p("Sinônimos aceitos (principais)", H2))
+    story.append(p("<b>Time IN (entrada)</b>:", H3))
+    story.append(p(
+        "Data Entrada, Data de Entrada, Data Abertura, Open Time, Entry Time, Open Date, Abertura",
+        SMALL,
+    ))
+    story.append(p("<b>Time OUT (saída)</b>:", H3))
+    story.append(p(
+        "Data Saída, Data Fechamento, Close Time, Exit Time, Close Date, Fechamento",
+        SMALL,
+    ))
+    story.append(p("<b>Side (lado)</b>:", H3))
+    story.append(p(
+        "Lado, Tipo, Compra/Venda, Operação, Side, Direction, Buy/Sell &nbsp;—&nbsp; "
+        "valores aceitos: Buy/Long/Compra/C/B/0/+1/Bullish ou Sell/Short/Venda/V/S/1/-1/Bearish",
+        SMALL,
+    ))
+    story.append(p("<b>Profit</b>:", H3))
+    story.append(p(
+        "Lucro, Resultado, Lucro/Prejuízo, Lucro Líquido, Líquido, P&amp;L, P/L, Profit, Net Profit",
+        SMALL,
+    ))
+    story.append(p("<b>Símbolo</b>:", H3))
+    story.append(p(
+        "Ativo, Papel, Ticker, Símbolo, Contrato, Instrumento, Symbol, Instrument",
+        SMALL,
+    ))
+    story.append(p("<b>Volume</b>:", H3))
+    story.append(p(
+        "Quantidade, Qtd, Lote, Volume, Qty, Size, Contratos, Lots",
+        SMALL,
+    ))
+    story.append(p("<b>Preços</b>:", H3))
+    story.append(p(
+        "Preço Entrada / Preço Saída / Preço Abertura / Preço Fechamento / Open Price / Close Price / Entry Price / Exit Price",
+        SMALL,
+    ))
+
+    story.append(p("Após salvar", H2))
+    story.append(p(
+        "O run salvo via Import CSV é tratado <b>exatamente igual</b> a um run vindo do MT5:"
+    ))
+    story += bullet_list([
+        "Aparece no <b>Histórico</b> com badge colorido da plataforma de origem (azul=MT5, verde=ProfitChart, roxo=TradeLocker).",
+        "Pode ser aberto no <b>Backtest Individual</b> para análise completa com TODOS os KPIs e o scorecard de robustez.",
+        "Pode ser combinado com outros runs no <b>Portfólio</b> (inclusive misturar plataformas).",
+        "Pode ser usado no <b>Walk-Forward Analysis</b> se você importar runs de períodos sequenciais.",
+        "Pode ser favoritado (★) e ter o label renomeado a qualquer momento.",
+    ])
+    story.append(warn(
+        "Métricas como <b>parâmetros do EA</b> e <b>balance por trade</b> podem estar incompletas "
+        "em runs importados via CSV, pois nem toda plataforma exporta esses campos. "
+        "Isso é normal — análises essenciais (Sharpe, DD, robustez, etc) funcionam normalmente."
+    ))
+
+    story.append(p("Se o parser não consegue ler seu CSV", H2))
+    story += numbered_list([
+        "Confirme que o arquivo é o CSV exportado da plataforma (não Excel salvo como CSV).",
+        "Tente forçar a plataforma manualmente (em vez de auto-detectar).",
+        "Veja a lista de <b>Erros</b> na tela de preview — o motivo está descrito em PT-BR.",
+        "Se o erro for &quot;Cabeçalho não encontrado&quot;, abra o CSV em editor de texto e confirme se as primeiras linhas têm os nomes esperados.",
+        "Se o erro for &quot;Decimais não-numéricos&quot;, confira se o CSV está em formato exportado direto (sem ter passado por Excel que pode trocar separadores).",
+        "Em último caso, mande o arquivo CSV para <b>thiago.belo.pasa@gmail.com</b> com prints — adicionamos os sinônimos do seu broker em até 48h.",
+    ])
+    story.append(PageBreak())
+
+    # ===== CAPÍTULO 7 =====
+    story.append(section_header("7", "Backtest Aura — importar relatório do MT5"))
     story.append(p("Quando usar esta aba", H2))
     story.append(p(
         "Sempre que você já tem um relatório de backtest do MT5 (arquivo <b>.htm</b>) e quer "
@@ -574,8 +747,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 7 =====
-    story.append(section_header("7", "Backtest Individual — análise completa"))
+    # ===== CAPÍTULO 8 =====
+    story.append(section_header("8", "Backtest Individual — análise completa"))
     story.append(p(
         "Esta é a aba mais rica do app. Tudo o que pode ser dito sobre um backtest aparece aqui. "
         "Vamos passar por todas as seções na ordem em que aparecem na tela."
@@ -779,8 +952,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 8 =====
-    story.append(section_header("8", "Otimização ao vivo"))
+    # ===== CAPÍTULO 9 =====
+    story.append(section_header("9", "Otimização ao vivo"))
     story.append(p("O que é", H2))
     story.append(p(
         "Em vez de rodar uma otimização no MT5, esperar horas, e SÓ ENTÃO importar o XML "
@@ -844,8 +1017,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 9 =====
-    story.append(section_header("9", "Análise de Otimização (Triagem)"))
+    # ===== CAPÍTULO 10 =====
+    story.append(section_header("10", "Análise de Otimização (Triagem)"))
     story.append(p("O que é", H2))
     story.append(p(
         "Depois que você tem um conjunto de passes (vindos de uma sessão ao vivo ou "
@@ -895,8 +1068,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 10 =====
-    story.append(section_header("10", "Portfólio — combinar robôs"))
+    # ===== CAPÍTULO 11 =====
+    story.append(section_header("11", "Portfólio — combinar robôs"))
     story.append(p("Quando usar", H2))
     story.append(p(
         "Você tem 2 ou mais robôs/configs e quer entender como eles se comportam <b>juntos</b>. "
@@ -976,8 +1149,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 11 =====
-    story.append(section_header("11", "Walk-Forward Analysis"))
+    # ===== CAPÍTULO 12 =====
+    story.append(section_header("12", "Walk-Forward Analysis"))
     story.append(p("O que é", H2))
     story.append(p(
         "Walk-Forward é o padrão-ouro para validar estratégias otimizadas. O AuraBackTest "
@@ -1026,8 +1199,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 12 =====
-    story.append(section_header("12", "Histórico"))
+    # ===== CAPÍTULO 13 =====
+    story.append(section_header("13", "Histórico"))
     story.append(p(
         "Lista persistente de todos os runs já importados ou gerados pelo app. "
         "Salvo em banco SQLite local — sobrevive a reinicializações e atualizações."
@@ -1053,8 +1226,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 13 =====
-    story.append(section_header("13", "Tooltips (?) e ajuda contextual"))
+    # ===== CAPÍTULO 14 =====
+    story.append(section_header("14", "Tooltips (?) e ajuda contextual"))
     story.append(p(
         "Quase toda métrica e item de scorecard no app tem um botão circular <b>?</b> ao lado do nome. "
         "Passe o mouse sobre ele para abrir um tooltip com 4 seções:"
@@ -1075,8 +1248,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 14 =====
-    story.append(section_header("14", "Glossário completo de métricas"))
+    # ===== CAPÍTULO 15 =====
+    story.append(section_header("15", "Glossário completo de métricas"))
     story.append(p("KPIs de performance", H2))
     story.append(metric_table([
         ("Net Profit", "Soma de todos os profits dos trades.", "&lt; 0 / +30% do capital", "&gt; 100%"),
@@ -1117,8 +1290,8 @@ def build_content():
     ]))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 15 =====
-    story.append(section_header("15", "Interpretando o scorecard de robustez"))
+    # ===== CAPÍTULO 16 =====
+    story.append(section_header("16", "Interpretando o scorecard de robustez"))
     story.append(p(
         "O scorecard é o resumo mais importante de qualquer análise. Tem três status finais:"
     ))
@@ -1165,8 +1338,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 16 =====
-    story.append(section_header("16", "Workflows recomendados"))
+    # ===== CAPÍTULO 17 =====
+    story.append(section_header("17", "Workflows recomendados"))
 
     story.append(p("Workflow 1 — Validando um robô que você já tem", H2))
     story += numbered_list([
@@ -1206,7 +1379,23 @@ def build_content():
         "O resultado &quot;Otimizado&quot; é seu mix recomendado. Compare com baseline (pesos iguais)."
     ])
 
-    story.append(p("Workflow 4 — Diagnóstico de robô em queda", H2))
+    story.append(p("Workflow 4 — Analisando estratégia do ProfitChart / TradeLocker", H2))
+    story += numbered_list([
+        "Na plataforma original, rode o backtest da sua estratégia.",
+        "Exporte o CSV da lista de operações (instruções específicas no capítulo 6).",
+        "No AuraBackTest, vá para a aba <b>Importar CSV</b>.",
+        "Faça upload, deixe a plataforma em <b>Detectar automaticamente</b>.",
+        "Clique em <b>Analisar (preview)</b> e revise: status OK? mapeamento de colunas confere? Trades nos primeiros 50 parecem corretos?",
+        "Se tudo OK, clique em <b>Confirmar e salvar</b>.",
+        "O app abre o run automaticamente no <b>Backtest Individual</b>.",
+        "A partir daqui o fluxo é idêntico aos robôs do MT5: rode <b>Suite de Robustez</b>, depois <b>Validações Estatísticas</b>.",
+        "Se aprovou, leve para o <b>Portfólio</b> ou <b>Walk-Forward</b> conforme o caso.",
+        "<b>Importante</b>: como a plataforma de origem não roda backtests pelo Aura, "
+        "o WFA automático não funciona com runs de ProfitChart/TradeLocker — você precisa exportar "
+        "múltiplos CSVs (um por período) manualmente e usá-los como portfólio.",
+    ])
+
+    story.append(p("Workflow 5 — Diagnóstico de robô em queda", H2))
     story += numbered_list([
         "Importe o backtest do período recente.",
         "Compare com backtest do período de glória (use dois runs separados).",
@@ -1218,8 +1407,8 @@ def build_content():
     ])
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 17 =====
-    story.append(section_header("17", "Solução de problemas (FAQ)"))
+    # ===== CAPÍTULO 18 =====
+    story.append(section_header("18", "Solução de problemas (FAQ)"))
 
     story.append(p("O app não abre / fica em &quot;Iniciando serviços&quot;", H2))
     story.append(p(
@@ -1267,6 +1456,27 @@ def build_content():
         "Use timeframe maior (H1 em vez de M5) — reduz tempo de processamento do MT5.",
     ])
 
+    story.append(p("Import de CSV: &quot;Cabeçalho não encontrado&quot;", H2))
+    story += bullet_list([
+        "Abra o CSV em editor de texto (Bloco de Notas, VSCode) e confirme se as primeiras linhas têm os nomes de coluna esperados.",
+        "Não use Excel para abrir e re-salvar o CSV — o Excel costuma trocar separadores e quebrar o parser.",
+        "Confirme que você exportou pela seção correta: ProfitChart → aba <b>Operações</b>; TradeLocker → menu 3 pontos no <b>Trade History</b>.",
+        "Se persistir, force a plataforma manualmente (dropdown) em vez de auto-detectar.",
+    ])
+
+    story.append(p("Import de CSV: preview mostra status PROBLEMA", H2))
+    story += bullet_list([
+        "Leia os erros listados — cada um indica linha e motivo (ex: &quot;Trade #15: side inválido&quot;).",
+        "Se os erros são em poucas linhas (&lt; 5%), você pode confirmar mesmo assim — essas linhas são ignoradas.",
+        "Se mais de 50% das linhas têm erro, provavelmente é problema de formato ou de versão do CSV — reporte ao suporte com o arquivo anexo.",
+    ])
+
+    story.append(p("Import de CSV: parser detectou plataforma errada", H2))
+    story += bullet_list([
+        "Force manualmente no dropdown <b>Plataforma</b> em vez de deixar em auto-detectar.",
+        "A detecção usa palavras-chave no cabeçalho — se seu CSV tem header customizado, o auto-detect pode escolher errado.",
+    ])
+
     story.append(p("Diferença entre Sharpe do MT5 e do app", H2))
     story.append(p(
         "Esperada. O MT5 usa cálculo simplificado de Sharpe (sem anualização correta, sem ajuste de skew). "
@@ -1280,8 +1490,8 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 18 =====
-    story.append(section_header("18", "Atualizações automáticas"))
+    # ===== CAPÍTULO 19 =====
+    story.append(section_header("19", "Atualizações automáticas"))
     story.append(p(
         "O AuraBackTest tem sistema de auto-update integrado. Fluxo:"
     ))
@@ -1306,14 +1516,14 @@ def build_content():
     ))
     story.append(PageBreak())
 
-    # ===== CAPÍTULO 19 =====
-    story.append(section_header("19", "Suporte e contato"))
+    # ===== CAPÍTULO 20 =====
+    story.append(section_header("20", "Suporte e contato"))
     story.append(p("Como obter ajuda", H2))
     story.append(p(
         "Antes de pedir suporte, tente:"
     ))
     story += numbered_list([
-        "Procurar a resposta neste manual (especialmente capítulo 17 - FAQ).",
+        "Procurar a resposta neste manual (especialmente capítulo 18 - FAQ).",
         "Passar o mouse sobre o botão <b>?</b> da métrica em questão.",
         "Reiniciar o app e tentar novamente.",
         "Abrir os logs (Ctrl+Shift+L) e ler as últimas linhas — frequentemente o erro está autoexplicativo.",
