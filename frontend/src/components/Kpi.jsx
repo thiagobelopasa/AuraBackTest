@@ -1,6 +1,7 @@
 import { gradeMetric, deltaVs, higherIsBetter } from '../services/grading'
+import { HelpTooltip } from './HelpTooltip'
 
-export function Kpi({ label, value, colored, format = 'num', digits = 2, gradeKey, baseline }) {
+export function Kpi({ label, value, colored, format = 'num', digits = 2, gradeKey, baseline, helpKey }) {
   const num = typeof value === 'number' ? value : parseFloat(value)
   let display = value
   if (!Number.isNaN(num) && Number.isFinite(num)) {
@@ -33,6 +34,7 @@ export function Kpi({ label, value, colored, format = 'num', digits = 2, gradeKe
     <div className="kpi" style={style} title={grade?.note || ''}>
       <div className="label">
         {label}
+        {helpKey && <HelpTooltip helpKey={helpKey} />}
         {grade && grade.grade !== 'neutral' && (
           <span style={{
             marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 8,

@@ -3,6 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLin
 import { api, listRuns, errorMessage, runPBO } from '../services/api'
 import { runLabelShort, runFingerprint } from '../services/runLabel'
 import { CorrelationHeatmap } from '../components/CorrelationHeatmap'
+import { HelpTooltip } from '../components/HelpTooltip'
+import { matchScorecardKey } from '../services/helpContent'
 
 export function PortfolioPage() {
   const [runs, setRuns] = useState([])
@@ -185,7 +187,7 @@ export function PortfolioPage() {
 
               <div className="grid cols-3" style={{ marginBottom: 16 }}>
                 <div className="kpi">
-                  <div className="label">Combinações CSCV</div>
+                  <div className="label">Combinações CSCV<HelpTooltip helpKey="pbo" /></div>
                   <div className="value">{pboResult.n_combinations.toLocaleString()}</div>
                   <div className="small muted">C(16,8) partições</div>
                 </div>
@@ -328,11 +330,11 @@ export function PortfolioPage() {
             <div className="grid cols-4">
               <div className="kpi"><div className="label">Runs</div><div className="value">{result.run_count}</div></div>
               <div className="kpi"><div className="label">Trades totais</div><div className="value">{result.total_trades}</div></div>
-              <div className="kpi"><div className="label">Net Profit</div><div className="value" style={{ color: result.analysis.net_profit >= 0 ? '#3fb950' : '#f85149' }}>{result.analysis.net_profit?.toFixed(2)}</div></div>
-              <div className="kpi"><div className="label">Max DD %</div><div className="value">{result.analysis.max_drawdown_pct?.toFixed(2)}%</div></div>
-              <div className="kpi"><div className="label">Sharpe</div><div className="value">{result.analysis.sharpe_ratio?.toFixed(3)}</div></div>
-              <div className="kpi"><div className="label">Profit Factor</div><div className="value">{result.analysis.profit_factor?.toFixed(2)}</div></div>
-              <div className="kpi"><div className="label">Win Rate</div><div className="value">{(result.analysis.win_rate * 100)?.toFixed(1)}%</div></div>
+              <div className="kpi"><div className="label">Net Profit<HelpTooltip helpKey="net-profit" /></div><div className="value" style={{ color: result.analysis.net_profit >= 0 ? '#3fb950' : '#f85149' }}>{result.analysis.net_profit?.toFixed(2)}</div></div>
+              <div className="kpi"><div className="label">Max DD %<HelpTooltip helpKey="max-dd-pct" /></div><div className="value">{result.analysis.max_drawdown_pct?.toFixed(2)}%</div></div>
+              <div className="kpi"><div className="label">Sharpe<HelpTooltip helpKey="sharpe" /></div><div className="value">{result.analysis.sharpe_ratio?.toFixed(3)}</div></div>
+              <div className="kpi"><div className="label">Profit Factor<HelpTooltip helpKey="profit-factor" /></div><div className="value">{result.analysis.profit_factor?.toFixed(2)}</div></div>
+              <div className="kpi"><div className="label">Win Rate<HelpTooltip helpKey="win-rate" /></div><div className="value">{(result.analysis.win_rate * 100)?.toFixed(1)}%</div></div>
               <div className="kpi"><div className="label">Total Trades</div><div className="value">{result.analysis.total}</div></div>
             </div>
           </div>
@@ -373,14 +375,14 @@ export function PortfolioPage() {
 
               <div className="grid cols-3" style={{ marginBottom: 16 }}>
                 <div className="kpi">
-                  <div className="label">Correlação média</div>
+                  <div className="label">Correlação média<HelpTooltip helpKey="avg-correlation" /></div>
                   <div className="value" style={{ color: corrColor(corr.avg_correlation) }}>
                     {corr.avg_correlation?.toFixed(3) ?? '—'}
                   </div>
                   <div className="small muted">{'<'} 0.3 = bem diversificado</div>
                 </div>
                 <div className="kpi">
-                  <div className="label">Índice de diversificação</div>
+                  <div className="label">Índice de diversificação<HelpTooltip helpKey="diversification-ratio" /></div>
                   <div className="value" style={{ color: corrColor(1 - (corr.diversification_ratio ?? 0)) }}>
                     {((corr.diversification_ratio ?? 0) * 100).toFixed(1)}%
                   </div>
@@ -437,7 +439,10 @@ export function PortfolioPage() {
                 <tbody>
                   {suite.scorecard?.map((c, i) => (
                     <tr key={i}>
-                      <td>{c.name}</td>
+                      <td>
+                        {c.name}
+                        <HelpTooltip helpKey={matchScorecardKey(c.name)} />
+                      </td>
                       <td><span className={'pill ' + (c.status === 'pass' ? 'pos' : 'neg')}>
                         {c.status === 'pass' ? 'PASS' : 'FAIL'}
                       </span></td>

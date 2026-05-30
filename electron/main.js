@@ -9,7 +9,6 @@ const { autoUpdater } = require('electron-updater')
 // -----------------------------------------------------------------------------
 // Config
 // -----------------------------------------------------------------------------
-const TRIAL_END_ISO = '2026-05-30T23:59:59-03:00'
 const BACKEND_PORT = 8765
 const BACKEND_HEALTH_URL = `http://127.0.0.1:${BACKEND_PORT}/health`
 const BACKEND_START_TIMEOUT_MS = 30_000
@@ -20,28 +19,6 @@ autoUpdater.logger = log
 
 let mainWindow = null
 let backendProcess = null
-
-// -----------------------------------------------------------------------------
-// Trial check
-// -----------------------------------------------------------------------------
-function isExpired() {
-  const now = new Date()
-  const end = new Date(TRIAL_END_ISO)
-  return now.getTime() > end.getTime()
-}
-
-function showExpiredDialog() {
-  dialog.showMessageBoxSync({
-    type: 'warning',
-    title: 'AuraBackTest — período de avaliação encerrado',
-    message: 'Período de avaliação encerrado.',
-    detail:
-      `Este período de uso gratuito terminou em ${new Date(TRIAL_END_ISO).toLocaleDateString('pt-BR')}.\n\n` +
-      'Para continuar usando, entre em contato com o autor:\n' +
-      'thiago.belo.pasa@gmail.com',
-    buttons: ['Fechar'],
-  })
-}
 
 // -----------------------------------------------------------------------------
 // Backend lifecycle
@@ -242,7 +219,6 @@ function setupAutoUpdater() {
 // -----------------------------------------------------------------------------
 ipcMain.handle('app:get-info', () => ({
   version: app.getVersion(),
-  trialEndIso: TRIAL_END_ISO,
   backendUrl: `http://127.0.0.1:${BACKEND_PORT}`,
 }))
 
@@ -308,12 +284,6 @@ if (!gotLock) {
   })
 
   app.whenReady().then(async () => {
-    if (isExpired()) {
-      showExpiredDialog()
-      app.quit()
-      return
-    }
-
     const loader = showLoadingDialog('Iniciando serviços…')
     try {
       startBackend()

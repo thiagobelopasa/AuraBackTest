@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { getStatValidation } from '../services/api'
+import { HelpTooltip } from './HelpTooltip'
+import { matchScorecardKey } from '../services/helpContent'
 
 function ScoreBanner({ passes, total, overall }) {
   const bg = overall === 'green' ? 'rgba(56,139,56,0.15)'
@@ -71,7 +73,10 @@ export function StatValidation({ runId }) {
               {result.scorecard.map((c, i) => (
                 <>
                   <tr key={i} style={{ cursor: 'pointer' }} onClick={() => setExpanded(expanded === i ? null : i)}>
-                    <td><b>{c.name}</b></td>
+                    <td>
+                      <b>{c.name}</b>
+                      <HelpTooltip helpKey={matchScorecardKey(c.name)} />
+                    </td>
                     <td>
                       <span className={'pill ' + (c.status === 'pass' ? 'pos' : 'neg')}>
                         {c.status === 'pass' ? 'PASS' : 'FAIL'}

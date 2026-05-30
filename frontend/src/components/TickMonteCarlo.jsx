@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { runTickMonteCarlo, fetchRunTicks, errorMessage } from '../services/api'
+import { HelpTooltip } from './HelpTooltip'
+import { matchScorecardKey } from '../services/helpContent'
 
 function StatusBanner({ overall, passes, total }) {
   const bg = overall === 'green' ? 'rgba(56,139,56,0.15)'
@@ -179,7 +181,11 @@ export function TickMonteCarlo({ runId, ticksPath }) {
             <tbody>
               {result.scorecard.map((c, i) => (
                 <tr key={i}>
-                  <td><b>{c.name}</b><div className="muted small">{c.note}</div></td>
+                  <td>
+                    <b>{c.name}</b>
+                    <HelpTooltip helpKey={matchScorecardKey(c.name)} />
+                    <div className="muted small">{c.note}</div>
+                  </td>
                   <td>
                     <span className={'pill ' + (c.status === 'pass' ? 'pos' : 'neg')}>
                       {c.status === 'pass' ? 'PASS' : 'FAIL'}

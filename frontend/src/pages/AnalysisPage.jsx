@@ -16,26 +16,28 @@ import { StatValidation } from '../components/StatValidation'
 import { TickMonteCarlo } from '../components/TickMonteCarlo'
 import { runOptionText } from '../services/runLabel'
 import { ContextualTooltip } from '../components/ContextualTooltip'
+import { HelpTooltip } from '../components/HelpTooltip'
+import { matchScorecardKey } from '../services/helpContent'
 
 const axisProps = { stroke: '#8b98a5', tick: { fontSize: 11 } }
 const tooltipStyle = { contentStyle: { background: '#0b0f14', border: '1px solid #1f2a37', fontSize: 12 } }
 
 const METRICS_LAYOUT = [
-  { label: 'Lucro Líquido', key: 'net_profit', format: 'money', colored: true },
-  { label: 'Lucro Líquido %', key: 'net_profit_pct', format: 'pct', colored: true },
-  { label: 'Retorno Anual', key: 'annual_return_pct', format: 'pct', colored: true },
-  { label: 'Drawdown Máx %', key: 'max_drawdown_pct', format: 'pct' },
-  { label: 'Fator de Lucro', key: 'profit_factor' },
-  { label: 'Expectativa', key: 'expectancy', format: 'money' },
-  { label: 'Payoff Ratio', key: 'payoff_ratio' },
-  { label: 'Taxa de Acerto', key: 'win_rate', format: 'pct', digits: 1 },
-  { label: 'Sharpe', key: 'sharpe_ratio', digits: 3 },
-  { label: 'Sortino', key: 'sortino_ratio', digits: 3 },
-  { label: 'SQN (Van Tharp)', key: 'sqn', digits: 3 },
-  { label: 'K-Ratio', key: 'k_ratio', digits: 3 },
-  { label: 'Fator de Recuperação', key: 'recovery_factor', digits: 3 },
-  { label: 'Índice Ulcer', key: 'ulcer_index', digits: 3 },
-  { label: 'Calmar', key: 'calmar_ratio', digits: 3 },
+  { label: 'Lucro Líquido', key: 'net_profit', format: 'money', colored: true, helpKey: 'net-profit' },
+  { label: 'Lucro Líquido %', key: 'net_profit_pct', format: 'pct', colored: true, helpKey: 'net-profit' },
+  { label: 'Retorno Anual', key: 'annual_return_pct', format: 'pct', colored: true, helpKey: 'annual-return' },
+  { label: 'Drawdown Máx %', key: 'max_drawdown_pct', format: 'pct', helpKey: 'max-dd-pct' },
+  { label: 'Fator de Lucro', key: 'profit_factor', helpKey: 'profit-factor' },
+  { label: 'Expectativa', key: 'expectancy', format: 'money', helpKey: 'expectancy' },
+  { label: 'Payoff Ratio', key: 'payoff_ratio', helpKey: 'payoff-ratio' },
+  { label: 'Taxa de Acerto', key: 'win_rate', format: 'pct', digits: 1, helpKey: 'win-rate' },
+  { label: 'Sharpe', key: 'sharpe_ratio', digits: 3, helpKey: 'sharpe' },
+  { label: 'Sortino', key: 'sortino_ratio', digits: 3, helpKey: 'sortino' },
+  { label: 'SQN (Van Tharp)', key: 'sqn', digits: 3, helpKey: 'sqn' },
+  { label: 'K-Ratio', key: 'k_ratio', digits: 3, helpKey: 'k-ratio' },
+  { label: 'Fator de Recuperação', key: 'recovery_factor', digits: 3, helpKey: 'recovery-factor' },
+  { label: 'Índice Ulcer', key: 'ulcer_index', digits: 3, helpKey: 'ulcer-index' },
+  { label: 'Calmar', key: 'calmar_ratio', digits: 3, helpKey: 'calmar' },
   { label: 'Total de Trades', key: 'total', format: 'num', digits: 0 },
 ]
 
@@ -327,7 +329,8 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                 <Kpi key={m.key} label={m.label}
                   value={m.key === 'win_rate' ? analysis[m.key] * 100 : analysis[m.key]}
                   format={m.format} digits={m.digits ?? 2}
-                  colored={m.colored} gradeKey={m.key === 'win_rate' ? null : m.key} />
+                  colored={m.colored} gradeKey={m.key === 'win_rate' ? null : m.key}
+                  helpKey={m.helpKey} />
               ))}
             </div>
           </div>
@@ -707,7 +710,10 @@ export function AnalysisPage({ currentRunId, onRunIdChange }) {
                   <tbody>
                     {suite.scorecard.map((c, i) => (
                       <tr key={i}>
-                        <td>{c.name}</td>
+                        <td>
+                          {c.name}
+                          <HelpTooltip helpKey={matchScorecardKey(c.name)} />
+                        </td>
                         <td><span className={'pill ' + (c.status === 'pass' ? 'pos' : 'neg')}>{c.status === 'pass' ? 'PASS' : 'FAIL'}</span></td>
                         <td><code>{c.value}</code></td>
                         <td className="small muted">
