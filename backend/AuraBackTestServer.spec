@@ -8,6 +8,7 @@ hiddenimports += collect_submodules("fastapi")
 hiddenimports += collect_submodules("pydantic")
 hiddenimports += collect_submodules("routers")
 hiddenimports += collect_submodules("services")
+hiddenimports += collect_submodules("services.platform_parsers")
 hiddenimports += [
     "uvicorn.logging",
     "uvicorn.loops.auto",

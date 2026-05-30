@@ -271,7 +271,7 @@ export function HistoryPage({ onOpenRun }) {
           <thead>
             <tr>
               <th style={{ width: 32 }}></th>
-              <th>Nome / robô</th><th>Ativo</th><th>TF</th><th>Fingerprint</th>
+              <th>Nome / robô</th><th>Plataforma</th><th>Ativo</th><th>TF</th><th>Fingerprint</th>
               <th>Tipo</th><th>Período</th><th>Criado</th><th>ID</th><th></th>
             </tr>
           </thead>
@@ -302,6 +302,25 @@ export function HistoryPage({ onOpenRun }) {
                       {r.favorite && <span className="pill gold" style={{ marginLeft: 8 }}>golden</span>}
                     </span>
                   )}
+                </td>
+                <td>
+                  {(() => {
+                    const plat = r.platform || 'mt5'
+                    const styles = {
+                      mt5: { bg: 'rgba(88,166,255,0.15)', color: '#58a6ff', border: '#58a6ff' },
+                      profitchart: { bg: 'rgba(63,185,80,0.15)', color: '#3fb950', border: '#3fb950' },
+                      tradelocker: { bg: 'rgba(163,113,247,0.15)', color: '#a371f7', border: '#a371f7' },
+                    }
+                    const s = styles[plat] || styles.mt5
+                    return (
+                      <span style={{
+                        padding: '2px 8px', borderRadius: 10, fontSize: 10, fontWeight: 600,
+                        background: s.bg, color: s.color, border: `1px solid ${s.border}`,
+                      }}>
+                        {plat === 'mt5' ? 'MT5' : plat === 'profitchart' ? 'ProfitChart' : 'TradeLocker'}
+                      </span>
+                    )
+                  })()}
                 </td>
                 <td><b>{r.symbol || '—'}</b></td>
                 <td><b>{r.timeframe || '—'}</b></td>

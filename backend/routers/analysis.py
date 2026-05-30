@@ -150,6 +150,113 @@ async def ingest_upload(
     return IngestReportResponse(run_id=run_id, num_trades=len(trades), metrics=analysis)
 
 
+# --------------------------------------------------------------- platform CSV import
+@router.post("/ingest-platform-preview")
+async def ingest_platform_preview(
+    file: UploadFile = File(...),
+    platform: str = Form("auto"),
+    symbol: str = Form("UNKNOWN"),
+) -> dict[str, Any]:
+    """Faz o parse SEM persistir nada. Retorna trades + metadata para preview.
+
+    O frontend mostra a tabela parseada e pede confirmação antes de salvar.
+    """
+    from services import platform_parsers as pp
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(400, "Arquivo vazio")
+
+    if platform == "auto":
+        platform = pp.detect_platform(content, file.filename or "")
+
+    if platform == "mt5":
+        raise HTTPException(
+            400,
+            "Para arquivos HTM do MT5 use o endpoint /analysis/ingest-upload. "
+            "Este endpoint é específico para CSVs do ProfitChart Pro e TradeLocker.",
+        )
+
+    try:
+        trades, meta = pp.parse_by_platform(platform, content, default_symbol=symbol)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+    validation = pp.validate_trades(trades)
+
+    return {
+        "platform": platform,
+        "filename": file.filename,
+        "trades": trades,  # retorna TODOS (frontend mostra só os primeiros N)
+        "trades_total": len(trades),
+        "validation": {
+            "ok": validation.ok,
+            "n_trades": validation.n_trades,
+            "n_errors": validation.n_errors,
+            "n_warnings": validation.n_warnings,
+            "errors": validation.errors,
+            "warnings": validation.warnings,
+        },
+        "metadata": meta,
+    }
+
+
+class IngestPlatformConfirmRequest(BaseModel):
+    platform: str
+    trades: list[dict[str, Any]]
+    symbol: str | None = None
+    timeframe: str | None = None
+    deposit: float = 10_000.0
+    label: str | None = None
+
+
+@router.post("/ingest-platform-confirm", response_model=IngestReportResponse)
+def ingest_platform_confirm(req: IngestPlatformConfirmRequest) -> IngestReportResponse:
+    """Persiste trades parseados de uma plataforma externa (ProfitChart/TradeLocker).
+
+    Fluxo: o frontend chama /ingest-platform-preview primeiro, exibe pro usuário,
+    se OK envia o JSON dos trades aqui para salvar.
+    """
+    if req.platform not in ("profitchart", "tradelocker"):
+        raise HTTPException(
+            400,
+            f"Plataforma inválida '{req.platform}'. Aceitos: profitchart, tradelocker.",
+        )
+    if not req.trades:
+        raise HTTPException(400, "Lista de trades vazia")
+
+    storage.init_db()
+    run_id = uuid.uuid4().hex[:8]
+
+    # Calcula análise full
+    analysis = analytics.full_analysis(req.trades, initial_equity=req.deposit)
+
+    # Salva run + trades + analysis
+    storage.save_run(
+        run_id=run_id,
+        kind="single",
+        ea_path=None,
+        symbol=req.symbol,
+        timeframe=req.timeframe,
+        from_date=None,
+        to_date=None,
+        deposit=req.deposit,
+        report_path=None,
+        parameters={},
+        metrics={},
+        label=req.label,
+        platform=req.platform,
+    )
+    storage.save_trades(run_id, req.trades)
+    storage.save_analysis(run_id, req.deposit, analysis)
+
+    return IngestReportResponse(
+        run_id=run_id,
+        num_trades=len(req.trades),
+        metrics=analysis,
+    )
+
+
 # --------------------------------------------------------------- analyze only
 class AnalyzeRequest(BaseModel):
     run_id: str

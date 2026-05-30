@@ -136,6 +136,7 @@ def _migrate(conn: sqlite3.Connection) -> None:
         ("params_hash", "ALTER TABLE runs ADD COLUMN params_hash TEXT"),
         ("favorite", "ALTER TABLE runs ADD COLUMN favorite INTEGER DEFAULT 0"),
         ("ticks_parquet_path", "ALTER TABLE runs ADD COLUMN ticks_parquet_path TEXT"),
+        ("platform", "ALTER TABLE runs ADD COLUMN platform TEXT DEFAULT 'mt5'"),
     ]:
         if col not in cols:
             conn.execute(ddl)
@@ -200,6 +201,7 @@ def save_run(
     parameters: dict[str, Any] | None,
     metrics: dict[str, Any] | None,
     label: str | None = None,
+    platform: str = "mt5",
 ) -> None:
     with connect() as conn:
         conn.execute(
@@ -207,8 +209,8 @@ def save_run(
             INSERT OR REPLACE INTO runs
                 (id, kind, ea_path, symbol, timeframe, from_date, to_date,
                  deposit, report_path, parameters, metrics, created_at,
-                 label, params_hash)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 label, params_hash, platform)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 run_id, kind, ea_path, symbol, timeframe, from_date, to_date,
@@ -217,6 +219,7 @@ def save_run(
                 json.dumps(metrics or {}),
                 _now(),
                 label, _params_hash(parameters),
+                platform,
             ),
         )
 

@@ -246,6 +246,18 @@ export const wfaAutoJobs = () =>
 export const runPBO = (runIds) =>
   api.post('/analysis/pbo', { run_ids: runIds }).then(r => r.data)
 
+// Import de CSVs de plataformas externas (ProfitChart Pro, TradeLocker)
+export const ingestPlatformPreview = (file, platform = 'auto', symbol = 'UNKNOWN') => {
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('platform', platform)
+  fd.append('symbol', symbol)
+  return api.post('/analysis/ingest-platform-preview', fd).then(r => r.data)
+}
+
+export const ingestPlatformConfirm = (payload) =>
+  api.post('/analysis/ingest-platform-confirm', payload).then(r => r.data)
+
 /** Abre um WebSocket para o stream de passes. Retorna o WebSocket já conectado. */
 export const openLiveOptStream = () => {
   const wsUrl = baseURL.replace(/^http/, 'ws') + '/live-optimization/ws'

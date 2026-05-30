@@ -8,6 +8,7 @@ import { TriagePage } from './pages/TriagePage'
 import { LiveOptPage } from './pages/LiveOptPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { WFAPage } from './pages/WFAPage'
+import { ImportPage } from './pages/ImportPage'
 import { TrialBanner } from './components/TrialBanner'
 import { BackendStatus } from './components/BackendStatus'
 import { UpdateBanner } from './components/UpdateBanner'
@@ -18,6 +19,7 @@ import { QuickStart } from './components/QuickStart'
 
 const TABS = [
   { id: 'home', label: 'Começar' },
+  { id: 'import', label: 'Importar CSV' },
   { id: 'liveopt', label: 'Otimização ao vivo' },
   { id: 'triage', label: 'Análise de Otimização' },
   { id: 'backtest', label: 'Backtest Aura' },
@@ -84,6 +86,7 @@ function App() {
           <WorkflowBreadcrumb currentTab={tab} />
         )}
         {tab === 'home' && <HomePage onNavigate={setTab} />}
+        {tab === 'import' && <ImportPage onRunSaved={openRun} />}
         {tab === 'backtest' && <BacktestPage onRunSaved={openRun} />}
         {tab === 'analysis' && <AnalysisPage currentRunId={currentRunId} onRunIdChange={setCurrentRunId} />}
         {tab === 'liveopt' && <LiveOptPage onOpenRun={openRun} onNavigateToTriage={navigateToTriage} />}
