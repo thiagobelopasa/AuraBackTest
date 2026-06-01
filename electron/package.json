@@ -1,7 +1,7 @@
 {
   "name": "aurabacktest",
   "productName": "AuraBackTest",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Backtesting MQL5 com analytics estilo QuantAnalyzer",
   "author": {
     "name": "Thiago Belopasa",
@@ -35,6 +35,7 @@
     "files": [
       "main.js",
       "preload.js",
+      "license.js",
       "package.json",
       "assets/**/*"
     ],

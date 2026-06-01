@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import { HomePage } from './pages/HomePage'
 import { BacktestPage } from './pages/BacktestPage'
@@ -9,6 +9,7 @@ import { LiveOptPage } from './pages/LiveOptPage'
 import { PortfolioPage } from './pages/PortfolioPage'
 import { WFAPage } from './pages/WFAPage'
 import { ImportPage } from './pages/ImportPage'
+import { LicenseActivationPage } from './pages/LicenseActivationPage'
 import { TrialBanner } from './components/TrialBanner'
 import { BackendStatus } from './components/BackendStatus'
 import { UpdateBanner } from './components/UpdateBanner'
@@ -17,7 +18,11 @@ import { OnboardingGuide } from './components/OnboardingGuide'
 import { WorkflowBreadcrumb } from './components/WorkflowBreadcrumb'
 import { QuickStart } from './components/QuickStart'
 
-const TABS = [
+// Abas permitidas em cada estado da licença.
+// - ACTIVE: tudo
+// - READONLY: só Histórico e Análise (visualização de runs antigos), sem novos imports/runs
+// - BLOCKED: nenhuma (tela de ativação ocupa toda a janela)
+const ALL_TABS = [
   { id: 'home', label: 'Começar' },
   { id: 'import', label: 'Importar CSV' },
   { id: 'liveopt', label: 'Otimização ao vivo' },
@@ -29,11 +34,42 @@ const TABS = [
   { id: 'history', label: 'Histórico' },
 ]
 
+const READONLY_TABS = new Set(['home', 'analysis', 'history'])
+
 function App() {
   const [tab, setTab] = useState('home')
   const [currentRunId, setCurrentRunId] = useState('')
   const [quickStartOpen, setQuickStartOpen] = useState(false)
   const [triagePreloadedData, setTriagePreloadedData] = useState(null)
+
+  // Estado da licença: null = ainda carregando; { state, reason?, info? } depois
+  const [license, setLicense] = useState(null)
+
+  const refreshLicense = async () => {
+    if (window.aura?.license) {
+      try {
+        const s = await window.aura.license.status()
+        setLicense(s)
+      } catch {
+        setLicense({ state: 'READONLY', reason: 'unknown_error' })
+      }
+    } else {
+      // Modo dev sem Electron — libera tudo
+      setLicense({ state: 'ACTIVE', info: { product_title: 'AuraBackTest (dev)' } })
+    }
+  }
+
+  useEffect(() => { refreshLicense() }, [])
+
+  // Revalida a cada 10 minutos enquanto o app está aberto
+  useEffect(() => {
+    const id = setInterval(refreshLicense, 10 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const handleActivated = () => {
+    refreshLicense().then(() => setTab('home'))
+  }
 
   const openRun = (id) => {
     setCurrentRunId(id)
@@ -45,10 +81,44 @@ function App() {
     setTab('triage')
   }
 
+  // Aguardando carregar
+  if (!license) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, background: '#0d1117', color: '#8b949e',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}>
+        Carregando…
+      </div>
+    )
+  }
+
+  // Bloqueado — tela de ativação ocupa tudo
+  if (license.state === 'BLOCKED') {
+    return (
+      <LicenseActivationPage
+        onActivated={handleActivated}
+        initialReason={license.reason !== 'no_key' ? license.reason : null}
+      />
+    )
+  }
+
+  const isReadonly = license.state === 'READONLY'
+  const visibleTabs = isReadonly
+    ? ALL_TABS.filter(t => READONLY_TABS.has(t.id))
+    : ALL_TABS
+
+  // Se está em readonly e a aba ativa não é permitida, redireciona
+  if (isReadonly && !READONLY_TABS.has(tab)) {
+    setTab('history')
+    return null
+  }
+
   return (
     <ToastProvider>
     <div className="app">
-      <TrialBanner />
+      <TrialBanner license={license} onDeactivate={refreshLicense} />
       <UpdateBanner />
       <div className="topbar">
         <div className="brand">
@@ -71,7 +141,7 @@ function App() {
         </div>
       </div>
       <div className="tabs">
-        {TABS.map(t => (
+        {visibleTabs.map(t => (
           <button
             key={t.id}
             className={'tab' + (tab === t.id ? ' active' : '')}

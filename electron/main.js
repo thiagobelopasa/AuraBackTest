@@ -5,6 +5,7 @@ const fs = require('fs')
 const http = require('http')
 const log = require('electron-log')
 const { autoUpdater } = require('electron-updater')
+const license = require('./license')
 
 // -----------------------------------------------------------------------------
 // Config
@@ -226,6 +227,20 @@ ipcMain.handle('app:open-logs', () => {
   shell.showItemInFolder(log.transports.file.getFile().path)
 })
 
+ipcMain.handle('app:open-external', (_evt, url) => {
+  // Aceita só URLs http(s) — segurança contra abrir file:// ou outros schemes
+  try {
+    const u = new URL(url)
+    if (u.protocol === 'http:' || u.protocol === 'https:') {
+      shell.openExternal(url)
+      return { ok: true }
+    }
+    return { ok: false, reason: 'invalid_scheme' }
+  } catch {
+    return { ok: false, reason: 'invalid_url' }
+  }
+})
+
 ipcMain.handle('app:check-updates', async () => {
   try {
     const r = await autoUpdater.checkForUpdates()
@@ -256,6 +271,42 @@ ipcMain.handle('app:backend-health', () => new Promise((resolve) => {
   req.setTimeout(2000, () => { req.destroy(); resolve({ ok: false, error: 'timeout', pid: backendProcess?.pid || null }) })
 }))
 
+// ---------- License IPCs ---------------------------------------------------
+ipcMain.handle('license:status', async () => {
+  try {
+    return await license.getStatus()
+  } catch (e) {
+    log.warn('license:status failed', e?.message || e)
+    return { state: 'READONLY', reason: 'unknown_error' }
+  }
+})
+
+ipcMain.handle('license:activate', async (_evt, key) => {
+  try {
+    return await license.activate(key)
+  } catch (e) {
+    log.warn('license:activate failed', e?.message || e)
+    return { ok: false, reason: 'unknown_error' }
+  }
+})
+
+ipcMain.handle('license:deactivate', () => {
+  try {
+    license.deactivate()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, reason: e.message }
+  }
+})
+
+ipcMain.handle('license:info', () => {
+  try {
+    return license.getCachedInfo()
+  } catch {
+    return null
+  }
+})
+
 ipcMain.handle('app:restart-backend', async () => {
   try {
     stopBackend()
@@ -284,6 +335,9 @@ if (!gotLock) {
   })
 
   app.whenReady().then(async () => {
+    // Inicializa o módulo de licença com o diretório de userData (sandbox por usuário)
+    license.initialize(app.getPath('userData'))
+
     const loader = showLoadingDialog('Iniciando serviços…')
     try {
       startBackend()
